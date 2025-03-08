@@ -1,0 +1,59 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Checkers.ViewModels"
+        Width="500" Height="500"
+        MinWidth="300" MinHeight="300"
+        Padding="10"
+        x:Class="Checkers.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Checkers">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        <TextBlock Grid.Row="0" Margin="10">
+            Checkers
+        </TextBlock>
+
+        <Viewbox Grid.Row="1" Stretch="Uniform">
+            <Grid Width="400" Height="400">
+                <ItemsControl ItemsSource="{Binding BoardViewModel.Squares}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="8" Columns="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:SquareViewModel">
+                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  Margin="0">
+
+                                <Image Source="{Binding Image}"
+                                       Stretch="Fill"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch" />
+
+                                <Button Background="Transparent"
+                                        Command="{Binding ClickCommand}"
+                                        Margin="0"
+                                        Padding="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Viewbox>
+
+        <TextBlock Grid.Row="2" Margin="10">
+            Need a Hint?
+        </TextBlock>
+    </Grid>
+
+</Window>
