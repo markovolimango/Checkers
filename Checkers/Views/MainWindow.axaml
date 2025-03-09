@@ -21,7 +21,7 @@
 
         <Viewbox Grid.Row="1" Stretch="Uniform">
             <Grid Width="400" Height="400">
-                <ItemsControl ItemsSource="{Binding BoardViewModel.Squares}">
+                <ItemsControl ItemsSource="{Binding Squares}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Rows="8" Columns="8" />
@@ -33,10 +33,13 @@
                             <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                                   Margin="0">
 
-                                <Image Source="{Binding Image}"
+                                <Image Source="{Binding BackgroundImage}"
                                        Stretch="Fill"
-                                       HorizontalAlignment="Stretch"
-                                       VerticalAlignment="Stretch" />
+                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+                                <Image Source="{Binding PieceImage}"
+                                       Stretch="Fill"
+                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
                                 <Button Background="Transparent"
                                         Command="{Binding ClickCommand}"

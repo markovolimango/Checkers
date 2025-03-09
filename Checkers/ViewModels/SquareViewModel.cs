@@ -2,29 +2,67 @@ using System;
 using System.Windows.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Checkers.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Checkers.ViewModels;
 
-public class SquareViewModel : ViewModelBase
+public partial class SquareViewModel : ViewModelBase
 {
-    public SquareViewModel(int row, int column, bool isDark)
+    private const string AssetsPath = "avares://Checkers/Assets";
+    private readonly string _backgroundImagePath;
+    private readonly string _selectedSquarePath = AssetsPath + "/Board/SelectedSquare.png";
+    [ObservableProperty] private Bitmap? _backgroundImage;
+    [ObservableProperty] private Bitmap? _pieceImage;
+
+    public SquareViewModel(int row, int column, bool isDark, Action<SquareViewModel> onSquareClick)
     {
-        Row = row;
-        Column = column;
-        var imagePath = isDark ? "avares://Checkers/Assets/DarkSquare.png" : "avares://Checkers/Assets/LightSquare.png";
-        Image = new Bitmap(AssetLoader.Open(new Uri(imagePath)));
-        ClickCommand = new RelayCommand(SquareClicked);
+        Pos = new Pos(row, column);
+        _backgroundImagePath = AssetsPath + "/Board/" + (isDark ? "DarkSquare.png" : "LightSquare.png");
+        BackgroundImage = new Bitmap(AssetLoader.Open(new Uri(_backgroundImagePath)));
+        PieceImage = null;
+        ClickCommand = new RelayCommand(() => onSquareClick(this));
     }
 
-    public Bitmap? Image { get; }
-
-    public int Row { get; }
-    public int Column { get; }
+    public Pos Pos { get; }
     public ICommand ClickCommand { get; }
 
-    private void SquareClicked()
+    public void PutPiece(Piece piece)
     {
-        Console.WriteLine($"Square clicked at {Row}, {Column}");
+        var pieceImageName = "";
+        switch (piece)
+        {
+            case Piece.Black:
+                pieceImageName = "BlackMan.png";
+                break;
+            case Piece.Red:
+                pieceImageName = "RedMan.png";
+                break;
+        }
+
+        if (pieceImageName == "")
+        {
+            PieceImage = null;
+            return;
+        }
+
+        var pieceImagePath = AssetsPath + "/Pieces/" + pieceImageName;
+        PieceImage = new Bitmap(AssetLoader.Open(new Uri(pieceImagePath)));
+    }
+
+    public void RemovePiece()
+    {
+        PutPiece(Piece.Empty);
+    }
+
+    public void Select()
+    {
+        BackgroundImage = new Bitmap(AssetLoader.Open(new Uri(_selectedSquarePath)));
+    }
+
+    public void Deselect()
+    {
+        BackgroundImage = new Bitmap(AssetLoader.Open(new Uri(_backgroundImagePath)));
     }
 }
