@@ -33,10 +33,10 @@ public partial class SquareViewModel : ViewModelBase
         var pieceImageName = "";
         switch (piece)
         {
-            case Piece.Black:
+            case Piece.BlackMan:
                 pieceImageName = "BlackMan.png";
                 break;
-            case Piece.Red:
+            case Piece.RedMan:
                 pieceImageName = "RedMan.png";
                 break;
         }

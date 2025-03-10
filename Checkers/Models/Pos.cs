@@ -10,6 +10,11 @@ public struct Pos : IEquatable<Pos>
         Col = col;
     }
 
+    public static implicit operator Pos((int row, int col) pos)
+    {
+        return new Pos(pos.row, pos.col);
+    }
+
     public int Row { get; set; }
     public int Col { get; set; }
 

@@ -24,24 +24,21 @@ public class MainWindowViewModel : ViewModelBase
 
         for (var row = 0; row < 3; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
-            GetSquare(row, col).PutPiece(Piece.Red);
+            GetSquare(row, col).PutPiece(Piece.RedMan);
 
         for (var row = 5; row < 8; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
-            GetSquare(row, col).PutPiece(Piece.Black);
+            GetSquare(row, col).PutPiece(Piece.BlackMan);
     }
 
     public ObservableCollection<SquareViewModel> Squares { get; }
 
     private void OnSquareClick(SquareViewModel square)
     {
+        var piece = _board.GetPiece(square.Pos);
         if (_from == null)
         {
-            if (_board.GetPiece(square.Pos) == Piece.Empty)
-            {
-                _from = null;
-                return;
-            }
+            if (piece.GetTeam() != _board.CurrentTurn) return;
 
             _from = square;
             square.Select();
@@ -52,6 +49,14 @@ public class MainWindowViewModel : ViewModelBase
         {
             _from = null;
             square.Deselect();
+            return;
+        }
+
+        if (piece.GetTeam() == _board.GetPiece(_from.Pos).GetTeam())
+        {
+            _from.Deselect();
+            square.Select();
+            _from = square;
             return;
         }
 
