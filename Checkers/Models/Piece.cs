@@ -42,6 +42,15 @@ public static class PieceExtensions
         return piece == Piece.BlackKing || piece == Piece.RedKing;
     }
 
+    public static Piece Promote(this Piece piece)
+    {
+        if (piece == Piece.BlackMan)
+            return Piece.BlackKing;
+        if (piece == Piece.RedMan)
+            return Piece.RedKing;
+        return piece;
+    }
+
     public static List<Pos> GetMoveDirections(this Piece piece)
     {
         var moveDirections = new List<Pos>();

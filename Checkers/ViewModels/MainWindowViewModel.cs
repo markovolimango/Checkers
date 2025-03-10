@@ -26,7 +26,6 @@ public class MainWindowViewModel : ViewModelBase
         //@formatter:on
     }, Team.Red);
 
-
     private readonly List<SquareViewModel> _path = [];
 
     public MainWindowViewModel()
@@ -87,7 +86,7 @@ public class MainWindowViewModel : ViewModelBase
             }
 
             _path.Add(square);
-            if (TryToFindMove(_path) != 0)
+            if (TryToMakeMove(_path) != 0)
             {
                 _path[0].Deselect();
                 _path.Clear();
@@ -100,7 +99,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             if (piece != Piece.Empty) return;
             _path.Add(square);
-            var res = TryToFindMove(_path);
+            var res = TryToMakeMove(_path);
             if (res == -1)
             {
                 _path.RemoveAt(_path.Count - 1);
@@ -117,7 +116,7 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private int TryToFindMove(List<SquareViewModel> path)
+    private int TryToMakeMove(List<SquareViewModel> path)
     {
         var moves = _board.FindMovesStartingWith(path.Select(square => square.Pos).ToList());
         if (moves.Count == 0) return -1;
@@ -126,8 +125,8 @@ public class MainWindowViewModel : ViewModelBase
             var move = moves[0];
             var piece = _board.GetPiece(path[0].Pos);
 
-            _board.MakeMove(move);
             MoveAlongPath(move.Path, piece);
+            _board.MakeMove(move);
 
             return 1;
         }

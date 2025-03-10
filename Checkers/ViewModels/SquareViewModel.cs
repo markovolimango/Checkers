@@ -39,6 +39,12 @@ public partial class SquareViewModel : ViewModelBase
             case Piece.RedMan:
                 pieceImageName = "RedMan.png";
                 break;
+            case Piece.BlackKing:
+                pieceImageName = "BlackKing.png";
+                break;
+            case Piece.RedKing:
+                pieceImageName = "RedKing.png";
+                break;
         }
 
         if (pieceImageName == "")

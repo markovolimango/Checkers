@@ -92,6 +92,8 @@ public class Board
         var piece = GetPiece(move.Start);
         RemovePiece(move.Start);
         PutPiece(move.End, piece);
+        if (move.End.Row == 7 || move.End.Row == 0)
+            PutPiece(move.End, piece.Promote());
         foreach (var pos in move.Captures)
             RemovePiece(pos);
         CurrentTurn = (Team)(-(int)CurrentTurn);
@@ -145,7 +147,8 @@ public class Board
         return pos.Row >= 0 && pos.Row < 8 && pos.Col >= 0 && pos.Col < 8;
     }
 
-    private void DFS(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos, Piece piece)
+    private void AddCaptureMoves(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos,
+        Piece piece)
     {
         var possibleCaptures = FindPossibleCaptures(pos, piece);
         if (possibleCaptures.Count == 0)
@@ -164,7 +167,7 @@ public class Board
             var targetPos = capture + (capture - pos);
             myPath.Add(targetPos);
             myCaptures.Add(capture);
-            DFS(moves, myPath, myCaptures, targetPos, piece);
+            AddCaptureMoves(moves, myPath, myCaptures, targetPos, piece);
         }
     }
 
@@ -198,7 +201,7 @@ public class Board
                 hasFoundCaptureMove = true;
             }
 
-            DFS(moves, [start], [], start, piece);
+            AddCaptureMoves(moves, [start], [], start, piece);
         }
 
         Console.WriteLine("Legal Moves:");
