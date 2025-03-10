@@ -61,13 +61,26 @@ public class Board
         Pieces[pos.Row, pos.Col] = Piece.Empty;
     }
 
-    public Move? FindMove(Pos from, Pos to)
+    public List<Move> FindMovesStartingWith(List<Pos> path)
     {
+        var res = new List<Move>();
         foreach (var move in _legalMoves)
-            if (move.Path[0] == from && move.Path[1] == to)
-                return move;
+        {
+            var len = path.Count;
+            if (len > move.Path.Count) continue;
+            var i = 0;
+            while (i < len)
+            {
+                if (move.Path[i] != path[i])
+                    break;
+                i++;
+            }
 
-        return null;
+            if (i == len)
+                res.Add(move);
+        }
+
+        return res;
     }
 
     public void MakeMove(Move? move)
@@ -83,7 +96,6 @@ public class Board
             RemovePiece(pos);
         CurrentTurn = (Team)(-(int)CurrentTurn);
         _legalMoves = FindAllLegalMoves();
-        //Console.WriteLine($"{this}\n\n");
     }
 
     private List<Pos> FindAdjacent(Pos pos, Piece piece)
@@ -107,31 +119,18 @@ public class Board
     private List<Pos> FindPossibleCaptures(Pos pos, Piece piece)
     {
         var adjacent = FindAdjacent(pos, piece);
-        if (pos == (2, 1))
-        {
-            var res = "Adjacent to (2,1): ";
-            foreach (var adj in adjacent)
-                res += $"{adj} {GetPiece(adj)}, ";
-            Console.WriteLine(res);
-        }
-
         var possibleCaptures = new List<Pos>();
-        foreach (var adj in adjacent)
-        {
-            if (pos == (4, 5)) Console.WriteLine($"{piece} {GetPiece(adj)}");
 
+        foreach (var adj in adjacent)
             if (AreOppositeTeam(piece, GetPiece(adj)))
             {
                 var targetPos = adj + (adj - pos);
-                if (pos == (4, 5))
-                    Console.WriteLine($"{targetPos} {GetPiece(targetPos)}");
 
                 if (!IsInBoard(targetPos)) continue;
                 if (GetPiece(targetPos) != Piece.Empty) continue;
 
                 possibleCaptures.Add(adj);
             }
-        }
 
         return possibleCaptures;
     }

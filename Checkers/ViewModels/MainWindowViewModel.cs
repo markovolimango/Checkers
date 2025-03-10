@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using Checkers.Models;
 using CommunityToolkit.Mvvm.Input;
@@ -8,8 +10,8 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly Board _board = new();
-    /*
+    //private readonly Board _board = new();
+
     private readonly Board _board = new(new Piece[8, 8]
     {
         //@formatter:off
@@ -17,15 +19,15 @@ public class MainWindowViewModel : ViewModelBase
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
         //@formatter:on
     }, Team.Red);
-    */
 
-    private SquareViewModel? _from, _to;
+
+    private readonly List<SquareViewModel> _path = [];
 
     public MainWindowViewModel()
     {
@@ -57,53 +59,113 @@ public class MainWindowViewModel : ViewModelBase
     private void OnSquareClick(SquareViewModel square)
     {
         var piece = _board.GetPiece(square.Pos);
-        if (_from == null)
+        if (_path.Count == 0)
         {
             if (piece.GetTeam() != _board.CurrentTurn) return;
 
-            _from = square;
+            _path.Add(square);
             square.Select();
             return;
         }
 
-        if (_from == square)
+        if (_path.Count == 1)
         {
-            _from = null;
-            square.Deselect();
+            if (_path[0] == square)
+            {
+                square.Deselect();
+                _path.Clear();
+                return;
+            }
+
+
+            if (piece.GetTeam() == _board.GetPiece(_path[0].Pos).GetTeam())
+            {
+                _path[0].Deselect();
+                square.Select();
+                _path[0] = square;
+                return;
+            }
+
+            _path.Add(square);
+            if (TryToFindMove(_path) != 0)
+            {
+                _path[0].Deselect();
+                _path.Clear();
+            }
+
             return;
         }
 
-        if (piece.GetTeam() == _board.GetPiece(_from.Pos).GetTeam())
+        if (_path.Count >= 2)
         {
-            _from.Deselect();
-            square.Select();
-            _from = square;
-            return;
-        }
+            if (piece != Piece.Empty) return;
+            _path.Add(square);
+            var res = TryToFindMove(_path);
+            if (res == -1)
+            {
+                _path.RemoveAt(_path.Count - 1);
+                return;
+            }
 
-        _to = square;
-        MovePiece(_from, _to);
-        _from.Deselect();
-        _from = _to = null;
+            if (res == 0) return;
+
+            if (res == 1)
+            {
+                _path[0].Deselect();
+                _path.Clear();
+            }
+        }
     }
 
-    private void MovePiece(SquareViewModel from, SquareViewModel to)
+    private int TryToFindMove(List<SquareViewModel> path)
     {
-        var move = _board.FindMove(from.Pos, to.Pos);
-        if (move is not null)
+        var moves = _board.FindMovesStartingWith(path.Select(square => square.Pos).ToList());
+        if (moves.Count == 0) return -1;
+        if (moves.Count == 1 && moves[0].Path.Count == path.Count)
         {
-            var piece = _board.GetPiece(from.Pos);
+            var move = moves[0];
+            var piece = _board.GetPiece(path[0].Pos);
 
             _board.MakeMove(move);
-            foreach (var pos in move.Captures)
-                GetSquare(pos).RemovePiece();
-            from.RemovePiece();
-            GetSquare(move.End).PutPiece(piece);
+            MoveAlongPath(move.Path, piece);
+
+            return 1;
         }
+        else
+        {
+            var piece = _board.GetPiece(path[0].Pos);
+            MoveAlongPath(_path, piece);
+
+            return 0;
+        }
+    }
+
+    private void MoveAlongPath(List<Pos> path, Piece piece)
+    {
+        for (var i = 0; i < path.Count - 1; i++)
+        {
+            GetSquare((path[i] + path[i + 1]) / 2).RemovePiece();
+            GetSquare(path[i]).RemovePiece();
+        }
+
+        GetSquare(path[path.Count - 1]).PutPiece(piece);
+    }
+
+    private void MoveAlongPath(List<SquareViewModel> path, Piece piece)
+    {
+        for (var i = 0; i < path.Count - 1; i++)
+        {
+            GetSquare((path[i].Pos + path[i + 1].Pos) / 2).RemovePiece();
+            path[i].RemovePiece();
+        }
+
+        path[path.Count - 1].PutPiece(piece);
     }
 
     private SquareViewModel GetSquare(int row, int col)
     {
+        if (row < 0 || row >= 8 || col < 0 || col >= 8)
+            throw new IndexOutOfRangeException();
         return Squares[row * 8 + col];
     }
 

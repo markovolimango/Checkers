@@ -18,8 +18,6 @@ public struct Pos : IEquatable<Pos>
     public int Row { get; set; }
     public int Col { get; set; }
 
-    public int Magnitude2 => Row * Row + Col * Col;
-
 
     public override string ToString()
     {
@@ -34,6 +32,11 @@ public struct Pos : IEquatable<Pos>
     public static Pos operator +(Pos a, Pos b)
     {
         return new Pos(a.Row + b.Row, a.Col + b.Col);
+    }
+
+    public static Pos operator /(Pos a, int b)
+    {
+        return new Pos(a.Row / b, a.Col / b);
     }
 
     public static bool operator ==(Pos a, Pos b)
