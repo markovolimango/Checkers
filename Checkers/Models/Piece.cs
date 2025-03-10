@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Checkers.Models;
@@ -16,16 +15,21 @@ public static class PieceExtensions
 {
     public static Team GetTeam(this Piece piece)
     {
-        if (Math.Sign((int)piece) == -1)
+        if (piece == Piece.BlackMan || piece == Piece.BlackKing)
             return Team.Black;
-        if (Math.Sign((int)piece) == 1)
+        if (piece == Piece.RedMan || piece == Piece.RedKing)
             return Team.Red;
         return Team.Empty;
     }
 
-    public static bool IsSameTeam(Piece piece1, Piece piece2)
+    public static bool AreSameTeam(Piece piece1, Piece piece2)
     {
         return piece1.GetTeam() == piece2.GetTeam();
+    }
+
+    public static bool AreOppositeTeam(Piece piece1, Piece piece2)
+    {
+        return (int)piece1.GetTeam() == -(int)piece2.GetTeam();
     }
 
     public static bool IsMan(this Piece piece)

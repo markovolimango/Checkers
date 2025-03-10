@@ -6,39 +6,58 @@ namespace Checkers.Models;
 
 public class Board
 {
-    private readonly Piece[,] _pieces;
     private List<Move> _legalMoves;
 
     public Board()
     {
-        _pieces = new Piece[8, 8];
+        Pieces = new Piece[8, 8];
         for (var row = 0; row < 3; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
-            _pieces[row, col] = Piece.RedMan;
+            Pieces[row, col] = Piece.RedMan;
 
         for (var row = 5; row < 8; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
-            _pieces[row, col] = Piece.BlackMan;
+            Pieces[row, col] = Piece.BlackMan;
 
         CurrentTurn = Team.Black;
         _legalMoves = FindAllLegalMoves();
     }
 
+    public Board(Piece[,] pieces, Team currentTurn)
+    {
+        Pieces = new Piece[8, 8];
+        for (var row = 0; row < 8; row++)
+        for (var col = 0; col < 8; col++)
+            Pieces[row, col] = pieces[row, col];
+
+        CurrentTurn = currentTurn;
+        _legalMoves = FindAllLegalMoves();
+    }
+
+    public Piece[,] Pieces { get; }
+
     public Team CurrentTurn { get; private set; }
 
     public Piece GetPiece(Pos pos)
     {
-        return _pieces[pos.Row, pos.Col];
+        if (!IsInBoard(pos))
+            throw new IndexOutOfRangeException($"Position {pos} is outside of an 8x8 board.");
+        return Pieces[pos.Row, pos.Col];
+    }
+
+    public Piece GetPiece(int row, int col)
+    {
+        return Pieces[row, col];
     }
 
     private void PutPiece(Pos pos, Piece piece)
     {
-        _pieces[pos.Row, pos.Col] = piece;
+        Pieces[pos.Row, pos.Col] = piece;
     }
 
     private void RemovePiece(Pos pos)
     {
-        _pieces[pos.Row, pos.Col] = Piece.Empty;
+        Pieces[pos.Row, pos.Col] = Piece.Empty;
     }
 
     public Move? FindMove(Pos from, Pos to)
@@ -63,17 +82,40 @@ public class Board
             RemovePiece(pos);
         CurrentTurn = (Team)(-(int)CurrentTurn);
         _legalMoves = FindAllLegalMoves();
+        //Console.WriteLine($"{this}\n\n");
+    }
+
+    private List<Pos> FindAdjacent(Pos pos)
+    {
+        var piece = GetPiece(pos);
+        var adjacent = new List<Pos>();
+        foreach (var dir in piece.GetMoveDirections())
+        {
+            var targetPos = pos + dir;
+            if (IsInBoard(targetPos))
+                adjacent.Add(targetPos);
+        }
+
+        return adjacent;
     }
 
     private List<Pos> FindAllCaptures(Pos pos)
     {
         var piece = GetPiece(pos);
-        var pieceMoveDir = (int)piece;
-        List<Pos> adjacent = [pos + (pieceMoveDir, -1), pos + (pieceMoveDir, 1)];
+        var adjacent = FindAdjacent(pos);
+
         var captures = new List<Pos>();
         foreach (var adj in adjacent)
-            if (!IsSameTeam(GetPiece(adj), piece))
+            if (AreOppositeTeam(piece, GetPiece(adj)))
+            {
+                var targetPos = pos + (adj - pos);
+
+                if (!IsInBoard(targetPos)) continue;
+                if (GetPiece(targetPos) != Piece.Empty) continue;
+
                 captures.Add(adj);
+            }
+
         return captures;
     }
 
@@ -90,14 +132,14 @@ public class Board
         for (var row = 0; row < 8; row++)
         for (var col = 0; col < 8; col++)
         {
-            Pos first = (row, col);
-            var piece = GetPiece(first);
+            Pos start = (row, col);
+            var piece = GetPiece(start);
             if (piece.GetTeam() != CurrentTurn)
                 continue;
 
             foreach (var dir in piece.GetMoveDirections())
             {
-                List<Pos> path = [first];
+                List<Pos> path = [start];
                 var second = path[0] + dir;
                 if (!IsInBoard(second))
                     continue;
@@ -106,35 +148,16 @@ public class Board
                 if (targetPiece.GetTeam() == piece.GetTeam())
                     continue;
 
-                if (!hasFoundCaptureMove)
+                if (targetPiece == Piece.Empty)
                 {
-                    if (targetPiece == Piece.Empty)
-                    {
-                        path.Add(second);
-                        moves.Add(new Move(path));
-                    }
-                    else
-                    {
-                        List<Pos> captures = [second];
-                        second += dir;
-                        if (!IsInBoard(second))
-                            continue;
+                    if (hasFoundCaptureMove)
+                        continue;
 
-                        targetPiece = GetPiece(second);
-                        if (targetPiece != Piece.Empty)
-                            continue;
-
-                        moves.Clear();
-                        path.Add(second);
-                        moves.Add(new Move(path, captures));
-                        hasFoundCaptureMove = true;
-                    }
+                    path.Add(second);
+                    moves.Add(new Move(path));
                 }
                 else
                 {
-                    if (targetPiece == Piece.Empty)
-                        continue;
-
                     List<Pos> captures = [second];
                     second += dir;
                     if (!IsInBoard(second))
@@ -143,6 +166,12 @@ public class Board
                     targetPiece = GetPiece(second);
                     if (targetPiece != Piece.Empty)
                         continue;
+
+                    if (!hasFoundCaptureMove)
+                    {
+                        moves.Clear();
+                        hasFoundCaptureMove = true;
+                    }
 
                     path.Add(second);
                     moves.Add(new Move(path, captures));
@@ -153,5 +182,21 @@ public class Board
         Console.WriteLine("Legal Moves:");
         foreach (var move in moves) Console.WriteLine(move.ToString());
         return moves;
+    }
+
+    public override string ToString()
+    {
+        var res = "";
+        for (var row = 0; row < 8; row++)
+        {
+            res += "{ ";
+            for (var col = 0; col < 8; col++)
+                res += $"Piece.{GetPiece(row, col)}, ";
+            res = res.Remove(res.Length - 2);
+            res += " },\n";
+        }
+
+        res = res.Remove(res.Length - 2);
+        return res;
     }
 }
