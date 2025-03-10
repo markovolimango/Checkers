@@ -15,9 +15,7 @@
     </Design.DataContext>
 
     <Grid RowDefinitions="Auto, *, Auto">
-        <TextBlock Grid.Row="0" Margin="10">
-            Checkers
-        </TextBlock>
+        <Button Grid.Row="0" Command="{Binding ExportCommand}">Export Board State</Button>
 
         <Viewbox Grid.Row="1" Stretch="Uniform">
             <Grid Width="400" Height="400">

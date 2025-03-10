@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static Checkers.Models.PieceExtensions;
 
 namespace Checkers.Models;
@@ -85,9 +86,8 @@ public class Board
         //Console.WriteLine($"{this}\n\n");
     }
 
-    private List<Pos> FindAdjacent(Pos pos)
+    private List<Pos> FindAdjacent(Pos pos, Piece piece)
     {
-        var piece = GetPiece(pos);
         var adjacent = new List<Pos>();
         foreach (var dir in piece.GetMoveDirections())
         {
@@ -99,29 +99,74 @@ public class Board
         return adjacent;
     }
 
-    private List<Pos> FindAllCaptures(Pos pos)
+    private List<Pos> FindAdjacent(Pos pos)
     {
-        var piece = GetPiece(pos);
-        var adjacent = FindAdjacent(pos);
+        return FindAdjacent(pos, GetPiece(pos));
+    }
 
-        var captures = new List<Pos>();
+    private List<Pos> FindPossibleCaptures(Pos pos, Piece piece)
+    {
+        var adjacent = FindAdjacent(pos, piece);
+        if (pos == (2, 1))
+        {
+            var res = "Adjacent to (2,1): ";
+            foreach (var adj in adjacent)
+                res += $"{adj} {GetPiece(adj)}, ";
+            Console.WriteLine(res);
+        }
+
+        var possibleCaptures = new List<Pos>();
         foreach (var adj in adjacent)
+        {
+            if (pos == (4, 5)) Console.WriteLine($"{piece} {GetPiece(adj)}");
+
             if (AreOppositeTeam(piece, GetPiece(adj)))
             {
-                var targetPos = pos + (adj - pos);
+                var targetPos = adj + (adj - pos);
+                if (pos == (4, 5))
+                    Console.WriteLine($"{targetPos} {GetPiece(targetPos)}");
 
                 if (!IsInBoard(targetPos)) continue;
                 if (GetPiece(targetPos) != Piece.Empty) continue;
 
-                captures.Add(adj);
+                possibleCaptures.Add(adj);
             }
+        }
 
-        return captures;
+        return possibleCaptures;
+    }
+
+    private List<Pos> FindPossibleCaptures(Pos pos)
+    {
+        return FindPossibleCaptures(pos, GetPiece(pos));
     }
 
     private static bool IsInBoard(Pos pos)
     {
         return pos.Row >= 0 && pos.Row < 8 && pos.Col >= 0 && pos.Col < 8;
+    }
+
+    private void DFS(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos, Piece piece)
+    {
+        var possibleCaptures = FindPossibleCaptures(pos, piece);
+        if (possibleCaptures.Count == 0)
+        {
+            moves.Add(new Move(path, captures));
+            return;
+        }
+
+        foreach (var capture in possibleCaptures)
+        {
+            if (captures.Contains(capture)) continue;
+
+            var myPath = new List<Pos>(path);
+            var myCaptures = new List<Pos>(captures);
+
+            var targetPos = capture + (capture - pos);
+            myPath.Add(targetPos);
+            myCaptures.Add(capture);
+            DFS(moves, myPath, myCaptures, targetPos, piece);
+        }
     }
 
     private List<Move> FindAllLegalMoves()
@@ -137,46 +182,24 @@ public class Board
             if (piece.GetTeam() != CurrentTurn)
                 continue;
 
-            foreach (var dir in piece.GetMoveDirections())
+            var possibleCaptures = FindPossibleCaptures(start);
+            if (possibleCaptures.Count == 0)
             {
-                List<Pos> path = [start];
-                var second = path[0] + dir;
-                if (!IsInBoard(second))
-                    continue;
+                if (hasFoundCaptureMove) continue;
 
-                var targetPiece = GetPiece(second);
-                if (targetPiece.GetTeam() == piece.GetTeam())
-                    continue;
-
-                if (targetPiece == Piece.Empty)
-                {
-                    if (hasFoundCaptureMove)
-                        continue;
-
-                    path.Add(second);
-                    moves.Add(new Move(path));
-                }
-                else
-                {
-                    List<Pos> captures = [second];
-                    second += dir;
-                    if (!IsInBoard(second))
-                        continue;
-
-                    targetPiece = GetPiece(second);
-                    if (targetPiece != Piece.Empty)
-                        continue;
-
-                    if (!hasFoundCaptureMove)
-                    {
-                        moves.Clear();
-                        hasFoundCaptureMove = true;
-                    }
-
-                    path.Add(second);
-                    moves.Add(new Move(path, captures));
-                }
+                foreach (var end in FindAdjacent(start))
+                    if (GetPiece(end) == Piece.Empty)
+                        moves.Add(new Move(start, end));
+                continue;
             }
+
+            if (!hasFoundCaptureMove)
+            {
+                moves.Clear();
+                hasFoundCaptureMove = true;
+            }
+
+            DFS(moves, [start], [], start, piece);
         }
 
         Console.WriteLine("Legal Moves:");

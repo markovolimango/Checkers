@@ -1,11 +1,30 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 using Checkers.Models;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly Board _board = new();
+    /*
+    private readonly Board _board = new(new Piece[8, 8]
+    {
+        //@formatter:off
+        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
+        //@formatter:on
+    }, Team.Red);
+    */
+
     private SquareViewModel? _from, _to;
 
     public MainWindowViewModel()
@@ -17,21 +36,23 @@ public class MainWindowViewModel : ViewModelBase
             isDark = !isDark;
             for (var col = 0; col < 8; col++)
             {
-                Squares.Add(new SquareViewModel(row, col, isDark, OnSquareClick));
+                var square = new SquareViewModel(row, col, isDark, OnSquareClick);
+                Squares.Add(square);
+                square.PutPiece(_board.GetPiece(row, col));
                 isDark = !isDark;
             }
         }
 
-        for (var row = 0; row < 3; row++)
-        for (var col = 1 - row % 2; col < 8; col += 2)
-            GetSquare(row, col).PutPiece(Piece.RedMan);
-
-        for (var row = 5; row < 8; row++)
-        for (var col = 1 - row % 2; col < 8; col += 2)
-            GetSquare(row, col).PutPiece(Piece.BlackMan);
+        ExportCommand = new RelayCommand(() => ExportBoardState());
     }
 
     public ObservableCollection<SquareViewModel> Squares { get; }
+    public ICommand ExportCommand { get; }
+
+    private void ExportBoardState()
+    {
+        Console.WriteLine($"{_board}");
+    }
 
     private void OnSquareClick(SquareViewModel square)
     {
@@ -77,7 +98,7 @@ public class MainWindowViewModel : ViewModelBase
             foreach (var pos in move.Captures)
                 GetSquare(pos).RemovePiece();
             from.RemovePiece();
-            to.PutPiece(piece);
+            GetSquare(move.End).PutPiece(piece);
         }
     }
 
