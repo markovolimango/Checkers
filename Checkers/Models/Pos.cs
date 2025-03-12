@@ -4,19 +4,21 @@ namespace Checkers.Models;
 
 public struct Pos : IEquatable<Pos>
 {
+    public readonly int Row;
+    public readonly int Col;
+
     public Pos(int row, int col)
     {
         Row = row;
         Col = col;
     }
 
+    public bool IsInKingsRow => Row == 0 || Row == 7;
+
     public static implicit operator Pos((int row, int col) pos)
     {
         return new Pos(pos.row, pos.col);
     }
-
-    public int Row { get; set; }
-    public int Col { get; set; }
 
 
     public override string ToString()

@@ -39,8 +39,20 @@ public class Board
     }
 
     public Piece[,] Pieces { get; }
-
     public Team CurrentTurn { get; private set; }
+
+    private static bool IsInBoard(Pos pos)
+    {
+        return pos.Row >= 0 && pos.Row < 8 && pos.Col >= 0 && pos.Col < 8;
+    }
+
+    private static bool IsInBoard(List<Pos> path)
+    {
+        foreach (var pos in path)
+            if (!IsInBoard(pos))
+                return false;
+        return true;
+    }
 
     public Piece GetPiece(Pos pos)
     {
@@ -61,56 +73,7 @@ public class Board
     {
         Pieces[pos.Row, pos.Col] = Piece.Empty;
     }
-
-    public List<Move> FindMovesStartingWith(List<Pos> path)
-    {
-        if (!IsInBoard(path))
-            throw new IndexOutOfRangeException();
-
-        var res = new List<Move>();
-        var len = path.Count;
-
-        foreach (var move in _legalMoves)
-        {
-            if (move.Path.Count < len) continue;
-
-            var i = 0;
-            while (i < len)
-            {
-                if (move.Path[i] != path[i])
-                    break;
-                i++;
-            }
-
-            if (i == len)
-                res.Add(move);
-        }
-
-        return res;
-    }
-
-    private bool IsLegalMove(Move move)
-    {
-        return _legalMoves.Contains(move);
-    }
-
-    public void MakeMove(Move move)
-    {
-        if (!IsLegalMove(move))
-            throw new ArgumentException("Invalid move");
-
-        Console.WriteLine($"Now making move {move}");
-        var piece = GetPiece(move.Start);
-        RemovePiece(move.Start);
-        PutPiece(move.End, piece);
-        if (move.End.Row == 7 || move.End.Row == 0)
-            PutPiece(move.End, piece.Promote());
-        foreach (var pos in move.Captures)
-            RemovePiece(pos);
-        CurrentTurn = (Team)(-(int)CurrentTurn);
-        _legalMoves = FindAllLegalMoves();
-    }
-
+    
     private List<Pos> FindAdjacent(Pos pos, Piece piece)
     {
         var adjacent = new List<Pos>();
@@ -152,20 +115,7 @@ public class Board
     {
         return FindPossibleCaptures(pos, GetPiece(pos));
     }
-
-    private bool IsInBoard(Pos pos)
-    {
-        return pos.Row >= 0 && pos.Row < 8 && pos.Col >= 0 && pos.Col < 8;
-    }
-
-    private bool IsInBoard(List<Pos> path)
-    {
-        foreach (var pos in path)
-            if (!IsInBoard(pos))
-                return false;
-        return true;
-    }
-
+    
     private void AddCaptureMoves(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos,
         Piece piece)
     {
@@ -189,7 +139,7 @@ public class Board
             AddCaptureMoves(moves, myPath, myCaptures, targetPos, piece);
         }
     }
-
+    
     private List<Move> FindAllLegalMoves()
     {
         var moves = new List<Move>();
@@ -226,6 +176,59 @@ public class Board
         Console.WriteLine("Legal Moves:");
         foreach (var move in moves) Console.WriteLine(move.ToString());
         return moves;
+    }
+    
+    private bool IsLegalMove(Move move)
+    {
+        return _legalMoves.Contains(move);
+    }
+    
+    public List<Move> FindMovesStartingWith(List<Pos> path, List<Move> moves)
+    {
+        if (!IsInBoard(path)) throw new IndexOutOfRangeException();
+
+        var res = new List<Move>();
+        var len = path.Count;
+
+        foreach (var move in moves)
+        {
+            if (move.Path.Count < len) continue;
+
+            var i = 0;
+            while (i < len)
+            {
+                if (move.Path[i] != path[i])
+                    break;
+                i++;
+            }
+
+            if (i == len)
+                res.Add(move);
+        }
+
+        return res;
+    }
+
+    public List<Move> FindMovesStartingWith(List<Pos> path)
+    {
+        return FindMovesStartingWith(path, _legalMoves);
+    }
+
+    public void MakeMove(Move move)
+    {
+        if (!IsLegalMove(move))
+            throw new ArgumentException("Invalid move");
+
+        Console.WriteLine($"Now making move {move}");
+        var piece = GetPiece(move.Start);
+        RemovePiece(move.Start);
+        PutPiece(move.End, piece);
+        if (move.End.Row == 7 || move.End.Row == 0)
+            PutPiece(move.End, piece.Promote());
+        foreach (var pos in move.Captures)
+            RemovePiece(pos);
+        CurrentTurn = (Team)(-(int)CurrentTurn);
+        _legalMoves = FindAllLegalMoves();
     }
 
     public override string ToString()

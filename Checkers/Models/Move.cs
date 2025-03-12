@@ -45,7 +45,7 @@ public class Move : IEquatable<Move>
 
     public List<Pos> Path { get; }
     public Pos Start => Path[0];
-    public Pos End => Path[Path.Count - 1];
+    public Pos End => Path[^1];
     public List<Pos> Captures { get; }
 
     public bool Equals(Move? other)
@@ -79,9 +79,9 @@ public class Move : IEquatable<Move>
     {
         unchecked
         {
-            var hash = 17; // Start with a prime number
+            var hash = 17;
             foreach (var pos in Path)
-                hash = hash * 31 + pos.GetHashCode(); // Multiply by a prime and add the next hash
+                hash = hash * 31 + pos.GetHashCode();
             foreach (var pos in Captures)
                 hash = hash * 31 + pos.GetHashCode();
             return hash;
