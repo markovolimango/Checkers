@@ -26,6 +26,9 @@ public class Board
 
     public Board(Piece[,] pieces, Team currentTurn)
     {
+        if (pieces.GetLength(0) != 8 || pieces.GetLength(1) != 8)
+            throw new ArgumentException("Invalid board size.");
+
         Pieces = new Piece[8, 8];
         for (var row = 0; row < 8; row++)
         for (var col = 0; col < 8; col++)
@@ -41,8 +44,6 @@ public class Board
 
     public Piece GetPiece(Pos pos)
     {
-        if (!IsInBoard(pos))
-            throw new IndexOutOfRangeException($"Position {pos} is outside of an 8x8 board.");
         return Pieces[pos.Row, pos.Col];
     }
 
@@ -63,11 +64,16 @@ public class Board
 
     public List<Move> FindMovesStartingWith(List<Pos> path)
     {
+        if (!IsInBoard(path))
+            throw new IndexOutOfRangeException();
+
         var res = new List<Move>();
+        var len = path.Count;
+
         foreach (var move in _legalMoves)
         {
-            var len = path.Count;
-            if (len > move.Path.Count) continue;
+            if (move.Path.Count < len) continue;
+
             var i = 0;
             while (i < len)
             {
@@ -83,10 +89,15 @@ public class Board
         return res;
     }
 
-    public void MakeMove(Move? move)
+    private bool IsLegalMove(Move move)
     {
-        if (move is null)
-            return;
+        return _legalMoves.Contains(move);
+    }
+
+    public void MakeMove(Move move)
+    {
+        if (!IsLegalMove(move))
+            throw new ArgumentException("Invalid move");
 
         Console.WriteLine($"Now making move {move}");
         var piece = GetPiece(move.Start);
@@ -142,9 +153,17 @@ public class Board
         return FindPossibleCaptures(pos, GetPiece(pos));
     }
 
-    private static bool IsInBoard(Pos pos)
+    private bool IsInBoard(Pos pos)
     {
         return pos.Row >= 0 && pos.Row < 8 && pos.Col >= 0 && pos.Col < 8;
+    }
+
+    private bool IsInBoard(List<Pos> path)
+    {
+        foreach (var pos in path)
+            if (!IsInBoard(pos))
+                return false;
+        return true;
     }
 
     private void AddCaptureMoves(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos,

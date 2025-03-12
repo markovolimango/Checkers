@@ -10,9 +10,9 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    //private readonly Board _board = new();
+    private readonly Board _board = new();
 
-    private readonly Board _board = new(new Piece[8, 8]
+    /*private readonly Board _board = new(new Piece[8, 8]
     {
         //@formatter:off
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
@@ -24,7 +24,8 @@ public class MainWindowViewModel : ViewModelBase
         { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
         //@formatter:on
-    }, Team.Red);
+    }, Team.Red);*/
+
 
     private readonly List<SquareViewModel> _path = [];
 
