@@ -13,6 +13,15 @@ public enum Piece
 
 public static class PieceExtensions
 {
+    private static readonly Dictionary<Piece, Pos[]> MoveDirections = new()
+    {
+        { Piece.Empty, [] },
+        { Piece.BlackMan, [(-1, -1), (-1, 1)] },
+        { Piece.BlackKing, [(-1, -1), (-1, 1), (1, -1), (1, 1)] },
+        { Piece.RedMan, [(1, -1), (1, 1)] },
+        { Piece.RedKing, [(1, -1), (1, 1), (-1, -1), (-1, 1)] }
+    };
+
     public static Team GetTeam(this Piece piece)
     {
         if (piece == Piece.BlackMan || piece == Piece.BlackKing)
@@ -51,20 +60,13 @@ public static class PieceExtensions
         return piece;
     }
 
-    public static List<Pos> GetMoveDirections(this Piece piece)
+    public static Pos[] GetMoveDirections(this Piece piece)
     {
-        var moveDirections = new List<Pos>();
-        if (piece == Piece.Empty)
-            return moveDirections;
+        return MoveDirections[piece];
+    }
 
-        var moveDir = (int)piece.GetTeam();
-        moveDirections.Add((moveDir, -1));
-        moveDirections.Add((moveDir, 1));
-        if (piece.IsMan())
-            return moveDirections;
-
-        moveDirections.Add((-moveDir, -1));
-        moveDirections.Add((-moveDir, 1));
-        return moveDirections;
+    public static float GetValue(this Piece piece)
+    {
+        return (int)piece;
     }
 }

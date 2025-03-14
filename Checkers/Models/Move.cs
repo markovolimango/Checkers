@@ -12,8 +12,8 @@ public class Move : IEquatable<Move>
     /// <param name="to">THe position the piece moves to.</param>
     public Move(Pos from, Pos to)
     {
-        Path = [from, to];
-        Captures = [];
+        Path = new List<Pos>(2) { from, to };
+        Captures = new List<Pos>(0);
     }
 
     /// <summary>

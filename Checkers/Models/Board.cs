@@ -7,21 +7,19 @@ namespace Checkers.Models;
 
 public class Board
 {
-    private List<Move> _legalMoves;
-
     public Board()
     {
         Pieces = new Piece[8, 8];
         for (var row = 0; row < 3; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
             Pieces[row, col] = Piece.RedMan;
-
         for (var row = 5; row < 8; row++)
         for (var col = 1 - row % 2; col < 8; col += 2)
             Pieces[row, col] = Piece.BlackMan;
-
         CurrentTurn = Team.Black;
-        _legalMoves = FindAllLegalMoves();
+        NumberOfPieces[Team.Black] = 12;
+        NumberOfPieces[Team.Red] = 12;
+        FindAllLegalMoves();
     }
 
     public Board(Piece[,] pieces, Team currentTurn)
@@ -32,14 +30,39 @@ public class Board
         Pieces = new Piece[8, 8];
         for (var row = 0; row < 8; row++)
         for (var col = 0; col < 8; col++)
-            Pieces[row, col] = pieces[row, col];
+        {
+            var piece = pieces[row, col];
+            Pieces[row, col] = piece;
+            if (piece != Piece.Empty)
+                NumberOfPieces[piece.GetTeam()]++;
+        }
 
         CurrentTurn = currentTurn;
-        _legalMoves = FindAllLegalMoves();
+        FindAllLegalMoves();
     }
 
+    public Board(Board other)
+    {
+        Pieces = new Piece[8, 8];
+        for (var row = 0; row < 8; row++)
+        for (var col = 0; col < 8; col++)
+            Pieces[row, col] = other[row, col];
+        CurrentTurn = other.CurrentTurn;
+        NumberOfPieces[Team.Black] = other.NumberOfPieces[Team.Black];
+        NumberOfPieces[Team.Red] = other.NumberOfPieces[Team.Red];
+        LegalMoves = new List<Move>(other.LegalMoves);
+    }
+
+    public List<Move> LegalMoves { get; } = new List<Move>(15);
     public Piece[,] Pieces { get; }
+    public Piece this[int row, int col] => Pieces[row, col];
+    public Piece this[Pos pos] => Pieces[pos.Row, pos.Col];
     public Team CurrentTurn { get; private set; }
+
+    private Dictionary<Team, int> NumberOfPieces { get; } =
+        new() { { Team.Black, 0 }, { Team.Red, 0 }, { Team.Empty, 0 } };
+
+    public Team Winner { get; private set; }
 
     private static bool IsInBoard(Pos pos)
     {
@@ -73,7 +96,7 @@ public class Board
     {
         Pieces[pos.Row, pos.Col] = Piece.Empty;
     }
-    
+
     private List<Pos> FindAdjacent(Pos pos, Piece piece)
     {
         var adjacent = new List<Pos>();
@@ -115,21 +138,18 @@ public class Board
     {
         return FindPossibleCaptures(pos, GetPiece(pos));
     }
-    
+
     private void AddCaptureMoves(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos,
         Piece piece)
     {
         var possibleCaptures = FindPossibleCaptures(pos, piece);
-        if (possibleCaptures.Count == 0)
-        {
-            moves.Add(new Move(path, captures));
-            return;
-        }
 
+        var i = 0;
         foreach (var capture in possibleCaptures)
         {
             if (captures.Contains(capture)) continue;
 
+            i++;
             var myPath = new List<Pos>(path);
             var myCaptures = new List<Pos>(captures);
 
@@ -138,11 +158,14 @@ public class Board
             myCaptures.Add(capture);
             AddCaptureMoves(moves, myPath, myCaptures, targetPos, piece);
         }
+
+        if (i == 0)
+            moves.Add(new Move(path, captures));
     }
-    
-    private List<Move> FindAllLegalMoves()
+
+    private void FindAllLegalMoves()
     {
-        var moves = new List<Move>();
+        LegalMoves.Clear();
         var hasFoundCaptureMove = false;
 
         for (var row = 0; row < 8; row++)
@@ -160,29 +183,20 @@ public class Board
 
                 foreach (var end in FindAdjacent(start))
                     if (GetPiece(end) == Piece.Empty)
-                        moves.Add(new Move(start, end));
+                        LegalMoves.Add(new Move(start, end));
                 continue;
             }
 
             if (!hasFoundCaptureMove)
             {
-                moves.Clear();
+                LegalMoves.Clear();
                 hasFoundCaptureMove = true;
             }
 
-            AddCaptureMoves(moves, [start], [], start, piece);
+            AddCaptureMoves(LegalMoves, [start], [], start, piece);
         }
+    }
 
-        Console.WriteLine("Legal Moves:");
-        foreach (var move in moves) Console.WriteLine(move.ToString());
-        return moves;
-    }
-    
-    private bool IsLegalMove(Move move)
-    {
-        return _legalMoves.Contains(move);
-    }
-    
     public List<Move> FindMovesStartingWith(List<Pos> path, List<Move> moves)
     {
         if (!IsInBoard(path)) throw new IndexOutOfRangeException();
@@ -211,15 +225,11 @@ public class Board
 
     public List<Move> FindMovesStartingWith(List<Pos> path)
     {
-        return FindMovesStartingWith(path, _legalMoves);
+        return FindMovesStartingWith(path, LegalMoves);
     }
 
     public void MakeMove(Move move)
     {
-        if (!IsLegalMove(move))
-            throw new ArgumentException("Invalid move");
-
-        Console.WriteLine($"Now making move {move}");
         var piece = GetPiece(move.Start);
         RemovePiece(move.Start);
         PutPiece(move.End, piece);
@@ -228,7 +238,7 @@ public class Board
         foreach (var pos in move.Captures)
             RemovePiece(pos);
         CurrentTurn = (Team)(-(int)CurrentTurn);
-        _legalMoves = FindAllLegalMoves();
+        FindAllLegalMoves();
     }
 
     public override string ToString()

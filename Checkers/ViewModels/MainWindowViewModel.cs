@@ -10,6 +10,7 @@ namespace Checkers.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly Board _board = new();
+    private readonly Bot.Bot _bot = new();
 
     /*private readonly Board _board = new(new Piece[8, 8]
     {
@@ -101,6 +102,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 SelectedSquare.Deselect();
                 _currentPath.Clear();
+                Console.WriteLine($"{_bot.Evaluate(_board, 6)}");
             }
 
             return;
@@ -120,6 +122,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             SelectedSquare.Deselect();
             _currentPath.Clear();
+            Console.WriteLine($"{_bot.Evaluate(_board, 6)}");
         }
     }
 
