@@ -30,33 +30,25 @@ public class Move : IEquatable<Move>
         Captures = captures;
     }
 
-    /// <summary>
-    ///     Constructs either a simple or jump move.
-    /// </summary>
-    /// <param name="path">A list of positions the piece stepped on</param>
-    /// <param name="captures">A list of the pieces that were jumped over</param>
-    public Move(IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures)
-    {
-        if (path.Count != captures.Count + 1)
-            throw new ArgumentException("Path list must have exactly one more element than captures.");
-        Path = new List<Pos>(path);
-        Captures = new List<Pos>(captures);
-    }
-
     public List<Pos> Path { get; }
     public Pos Start => Path[0];
     public Pos End => Path[^1];
     public List<Pos> Captures { get; }
 
-    public bool Equals(Move? other)
+    public bool Equals(Move other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
         if (Path.Count != other.Path.Count || Captures.Count != other.Captures.Count)
             return false;
+        if (Captures.Count == 0)
+            return Path[0] == other.Path[0] && Path[1] == other.Path[1];
         for (var i = 0; i < Captures.Count; i++)
-            if (Path[i] != other.Path[i] || Captures[i] != other.Captures[i])
+        {
+            if (Path[i] != other.Path[i])
                 return false;
+            if (Captures[i] != other.Captures[i])
+                return false;
+        }
+
         return Path[^1] == other.Path[^1];
     }
 

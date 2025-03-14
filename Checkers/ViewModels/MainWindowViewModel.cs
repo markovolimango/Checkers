@@ -16,13 +16,13 @@ public class MainWindowViewModel : ViewModelBase
     {
         //@formatter:off
         { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
+       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
+       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
         //@formatter:on
     }, Team.Red);*/
 

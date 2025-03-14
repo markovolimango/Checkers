@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using static Checkers.Models.PieceExtensions;
 
 namespace Checkers.Models;
 
 public class Board
 {
+    private readonly List<Pos> _capturesBuffer = new(4);
+    private List<Pos> _adjacentBuffer = new(4);
+
     public Board()
     {
         Pieces = new Piece[8, 8];
@@ -19,6 +21,7 @@ public class Board
         CurrentTurn = Team.Black;
         NumberOfPieces[Team.Black] = 12;
         NumberOfPieces[Team.Red] = 12;
+        LegalMoves = new List<Move>(15);
         FindAllLegalMoves();
     }
 
@@ -38,6 +41,7 @@ public class Board
         }
 
         CurrentTurn = currentTurn;
+        LegalMoves = new List<Move>(15);
         FindAllLegalMoves();
     }
 
@@ -53,7 +57,7 @@ public class Board
         LegalMoves = new List<Move>(other.LegalMoves);
     }
 
-    public List<Move> LegalMoves { get; } = new List<Move>(15);
+    public List<Move> LegalMoves { get; }
     public Piece[,] Pieces { get; }
     public Piece this[int row, int col] => Pieces[row, col];
     public Piece this[Pos pos] => Pieces[pos.Row, pos.Col];
@@ -99,15 +103,15 @@ public class Board
 
     private List<Pos> FindAdjacent(Pos pos, Piece piece)
     {
-        var adjacent = new List<Pos>();
+        _adjacentBuffer.Clear();
         foreach (var dir in piece.GetMoveDirections())
         {
             var targetPos = pos + dir;
             if (IsInBoard(targetPos))
-                adjacent.Add(targetPos);
+                _adjacentBuffer.Add(targetPos);
         }
 
-        return adjacent;
+        return _adjacentBuffer;
     }
 
     private List<Pos> FindAdjacent(Pos pos)
@@ -117,10 +121,10 @@ public class Board
 
     private List<Pos> FindPossibleCaptures(Pos pos, Piece piece)
     {
-        var adjacent = FindAdjacent(pos, piece);
-        var possibleCaptures = new List<Pos>();
+        _adjacentBuffer = FindAdjacent(pos, piece);
+        _capturesBuffer.Clear();
 
-        foreach (var adj in adjacent)
+        foreach (var adj in _adjacentBuffer)
             if (AreOppositeTeam(piece, GetPiece(adj)))
             {
                 var targetPos = adj + (adj - pos);
@@ -128,10 +132,10 @@ public class Board
                 if (!IsInBoard(targetPos)) continue;
                 if (GetPiece(targetPos) != Piece.Empty) continue;
 
-                possibleCaptures.Add(adj);
+                _capturesBuffer.Add(adj);
             }
 
-        return possibleCaptures;
+        return _capturesBuffer;
     }
 
     private List<Pos> FindPossibleCaptures(Pos pos)
@@ -139,28 +143,65 @@ public class Board
         return FindPossibleCaptures(pos, GetPiece(pos));
     }
 
-    private void AddCaptureMoves(List<Move> moves, IReadOnlyList<Pos> path, IReadOnlyList<Pos> captures, Pos pos,
-        Piece piece)
+    private void NonRecursiveDFS(List<Move> moves, Pos initialPos, Piece piece)
     {
-        var possibleCaptures = FindPossibleCaptures(pos, piece);
+        // Stack to store the state of our search
+        var stack = new Stack<DFSState>();
 
-        var i = 0;
-        foreach (var capture in possibleCaptures)
+        // Initialize with starting position
+        stack.Push(new DFSState(
+            new List<Pos> { initialPos }, // Initial path with just starting position
+            new List<Pos>(), // Empty captures list
+            initialPos, // Current position
+            0)); // Index to track which capture we're processing
+
+        while (stack.Count > 0)
         {
-            if (captures.Contains(capture)) continue;
+            var state = stack.Pop();
 
-            i++;
-            var myPath = new List<Pos>(path);
-            var myCaptures = new List<Pos>(captures);
+            // Get possible captures from current position
+            var possibleCaptures = FindPossibleCaptures(state.CurrentPos, piece);
 
-            var targetPos = capture + (capture - pos);
-            myPath.Add(targetPos);
-            myCaptures.Add(capture);
-            AddCaptureMoves(moves, myPath, myCaptures, targetPos, piece);
+            // If no captures possible, add the move and continue
+            if (possibleCaptures.Count == 0)
+            {
+                moves.Add(new Move(state.Path, state.Captures));
+                continue;
+            }
+
+            // If we've processed all captures for this position, continue to next state
+            if (state.CaptureIndex >= possibleCaptures.Count)
+                continue;
+
+            // Push the current state back with incremented index
+            stack.Push(new DFSState(
+                state.Path,
+                state.Captures,
+                state.CurrentPos,
+                state.CaptureIndex + 1));
+
+            // Get the current capture to process
+            var capture = possibleCaptures[state.CaptureIndex];
+
+            // Skip if we've already captured this position
+            if (state.Captures.Contains(capture))
+                continue;
+
+            // Create new lists with the current capture
+            var newPath = new List<Pos>(state.Path);
+            var newCaptures = new List<Pos>(state.Captures);
+
+            // Calculate the new position after the capture
+            var targetPos = capture + (capture - state.CurrentPos);
+            newPath.Add(targetPos);
+            newCaptures.Add(capture);
+            
+            stack.Push(new DFSState(
+                newPath,
+                newCaptures,
+                targetPos,
+                0)); // Start with first capture at new position
         }
-
-        if (i == 0)
-            moves.Add(new Move(path, captures));
     }
 
     private void FindAllLegalMoves()
@@ -193,7 +234,7 @@ public class Board
                 hasFoundCaptureMove = true;
             }
 
-            AddCaptureMoves(LegalMoves, [start], [], start, piece);
+            NonRecursiveDFS(LegalMoves, start, piece);
         }
     }
 
@@ -255,5 +296,21 @@ public class Board
 
         res = res.Remove(res.Length - 2);
         return res;
+    }
+    
+    private class DFSState
+    {
+        public DFSState(List<Pos> path, List<Pos> captures, Pos currentPos, int captureIndex)
+        {
+            Path = path;
+            Captures = captures;
+            CurrentPos = currentPos;
+            CaptureIndex = captureIndex;
+        }
+
+        public List<Pos> Path { get; }
+        public List<Pos> Captures { get; }
+        public Pos CurrentPos { get; }
+        public int CaptureIndex { get; }
     }
 }
