@@ -33,16 +33,24 @@ public partial class Square : ViewModelBase
     [ObservableProperty] private Bitmap _backgroundImage;
     [ObservableProperty] private Bitmap? _pieceImage;
 
-    public Square(int row, int column, bool isDark, Action<Square> onSquareClick)
+    public Square(int row, int col, bool isDark, Action<Square> onSquareClick)
     {
-        Pos = new Pos(row, column);
+        Row = row;
+        Col = col;
+        Index = (byte)(row * 8 + col);
+        Mask = 1UL << Index;
+
         ClickCommand = new RelayCommand(() => onSquareClick(this));
 
         _squareImage = isDark ? DarkSquareImage : LightSquareImage;
         BackgroundImage = _squareImage;
     }
 
-    public Pos Pos { get; }
+    public int Row { get; }
+    public int Col { get; }
+    public byte Index { get; }
+    public ulong Mask { get; }
+
     public ICommand ClickCommand { get; }
 
     public void PutPiece(Piece piece)

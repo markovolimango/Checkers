@@ -5,94 +5,61 @@ namespace Checkers.Models;
 
 public class Move : IEquatable<Move>
 {
-    /// <summary>
-    ///     Constructs a simple move with no captures.
-    /// </summary>
-    /// <param name="from">The position from which the piece starts</param>
-    /// <param name="to">THe position the piece moves to.</param>
-    public Move(Pos from, Pos to)
+    public Move(List<byte> path, ulong captures)
     {
-        Path = new List<Pos>(2) { from, to };
-        Captures = new List<Pos>(0);
-    }
-
-    /// <summary>
-    ///     Constructs either a simple or jump move.
-    /// </summary>
-    /// <param name="path">A list of positions the piece stepped on</param>
-    /// <param name="captures">A list of the pieces that were jumped over</param>
-    public Move(List<Pos> path, List<Pos> captures)
-    {
-        if (path.Count != captures.Count + 1)
-            if (path.Count != 2 || captures.Count != 0)
-                throw new ArgumentException("Path list must have exactly one more element than captures.");
-        Path = path;
+        Path = new List<byte>(path);
         Captures = captures;
     }
 
-    public List<Pos> Path { get; }
-    public Pos Start => Path[0];
-    public Pos End => Path[^1];
-    public List<Pos> Captures { get; }
+    public List<byte> Path { get; }
+    public ulong Captures { get; }
+    public byte Start => Path[0];
+    public byte End => Path[^1];
 
-    public bool Equals(Move other)
+
+    public bool Equals(Move? other)
     {
-        if (Path.Count != other.Path.Count || Captures.Count != other.Captures.Count)
+        if (other is null || Path.Count != other.Path.Count || Captures != other.Captures)
             return false;
-        if (Captures.Count == 0)
-            return Path[0] == other.Path[0] && Path[1] == other.Path[1];
-        for (var i = 0; i < Captures.Count; i++)
-        {
+
+        for (var i = 0; i < Path.Count; i++)
             if (Path[i] != other.Path[i])
                 return false;
-            if (Captures[i] != other.Captures[i])
-                return false;
-        }
 
-        return Path[^1] == other.Path[^1];
-    }
-
-    public static bool operator ==(Move move1, Move move2)
-    {
-        return move1.Equals(move2);
-    }
-
-    public static bool operator !=(Move move1, Move move2)
-    {
-        return !(move1 == move2);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return obj is Move move && Equals(move);
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked
-        {
-            var hash = 17;
-            foreach (var pos in Path)
-                hash = hash * 31 + pos.GetHashCode();
-            foreach (var pos in Captures)
-                hash = hash * 31 + pos.GetHashCode();
-            return hash;
-        }
+        return true;
     }
 
     public override string ToString()
     {
         var res = "";
-        foreach (var pos in Path)
-            res += $"{pos} -> ";
-        res = res.Remove(res.Length - 3);
-        if (Captures.Count > 0)
-        {
-            res += ", capturing: ";
-            foreach (var pos in Captures)
-                res += $"{pos} ";
-        }
+        foreach (var index in Path)
+            res += $"{Board.ToPos(index)} -> ";
+        res = res.Remove(res.Length - 4, 4);
+        if (Captures == 0)
+            return res;
+        res += " capturing ";
+        foreach (var capture in Board.GetPieceMasks(Captures))
+            res += $"{Board.ToPos(capture)}, ";
+        return res.Remove(res.Length - 2, 2);
+    }
 
-        return res;
+    public override bool Equals(object? obj)
+    {
+        return obj is Move other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Path, Captures);
+    }
+
+    public static bool operator ==(Move a, Move b)
+    {
+        return a.Equals(b);
+    }
+
+    public static bool operator !=(Move a, Move b)
+    {
+        return !a.Equals(b);
     }
 }

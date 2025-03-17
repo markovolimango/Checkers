@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Checkers.Models;
 using CommunityToolkit.Mvvm.Input;
@@ -10,28 +9,12 @@ namespace Checkers.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly Board _board = new();
-    private readonly Bot.Bot _bot = new();
-
-    /*private readonly Board _board = new(new Piece[8, 8]
-    {
-        //@formatter:off
-        { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.RedMan ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.BlackMan ,Piece.Empty ,Piece.Empty ,Piece.Empty},
-       { Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty ,Piece.Empty}
-        //@formatter:on
-    }, Team.Red);*/
-
-    private readonly List<Pos> _currentPath = [];
-    private List<Move> _possibleMoves = [];
+    private readonly List<byte> _path = new(4);
+    private List<Move> _moves = new(10);
 
     public MainWindowViewModel()
     {
-        Squares = [];
+        Squares = new Square[64];
         var isDark = true;
         for (var row = 0; row < 8; row++)
         {
@@ -39,8 +22,8 @@ public class MainWindowViewModel : ViewModelBase
             for (var col = 0; col < 8; col++)
             {
                 var square = new Square(row, col, isDark, OnSquareClick);
-                Squares.Add(square);
-                square.PutPiece(_board.GetPiece(row, col));
+                Squares[row * 8 + col] = square;
+                square.PutPiece(_board[row, col]);
                 isDark = !isDark;
             }
         }
@@ -48,110 +31,76 @@ public class MainWindowViewModel : ViewModelBase
         ExportCommand = new RelayCommand(ExportBoardState);
     }
 
-    public ObservableCollection<Square> Squares { get; }
+    public Square[] Squares { get; }
     public ICommand ExportCommand { get; }
-
-    private Square SelectedSquare => GetSquare(_currentPath[0]);
-    private Piece SelectedPiece => _board.GetPiece(_currentPath[0]);
-
-    private Square GetSquare(int row, int col)
-    {
-        if (row < 0 || row >= 8 || col < 0 || col >= 8)
-            throw new IndexOutOfRangeException();
-        return Squares[row * 8 + col];
-    }
-
-    private Square GetSquare(Pos pos)
-    {
-        return GetSquare(pos.Row, pos.Col);
-    }
 
     private void OnSquareClick(Square square)
     {
-        var pos = square.Pos;
-        var piece = _board.GetPiece(square.Pos);
-        if (_currentPath.Count == 0)
+        var piece = _board[square.Mask];
+        if (_path.Count == 0)
         {
-            if (piece.GetTeam() != _board.CurrentTurn) return;
-
-            _currentPath.Add(pos);
+            if (piece == Piece.Empty || (sbyte)piece > 0 == _board.IsBlackTurn)
+                return;
+            _path.Add(square.Index);
             square.Select();
             return;
         }
 
-        if (_currentPath.Count == 1)
+        var res = 0;
+        if (_path.Count == 1)
         {
-            if (_currentPath[0] == pos)
+            if (_board[square.Mask] != Piece.Empty)
             {
-                square.Deselect();
-                _currentPath.Clear();
+                Squares[_path[0]].Deselect();
+                _path.Clear();
                 return;
             }
 
-
-            if (piece.GetTeam() == _board.GetPiece(_currentPath[0]).GetTeam())
+            _moves = _board.FindMovesStartingWith(_path);
+            res = MoveTo(square.Index);
+            if (res == -1 || res == 1)
             {
-                SelectedSquare.Deselect();
-                square.Select();
-                _currentPath[0] = pos;
-                return;
-            }
-
-            _possibleMoves = _board.FindMovesStartingWith(_currentPath);
-            if (MoveTo(pos) != 0)
-            {
-                SelectedSquare.Deselect();
-                _currentPath.Clear();
-                Console.WriteLine($"{_bot.Evaluate(_board, 6)}");
+                Squares[_path[0]].Deselect();
+                _path.Clear();
             }
 
             return;
         }
 
-        if (piece != Piece.Empty) return;
-        var res = MoveTo(pos);
-        if (res == -1)
-        {
-            _currentPath.RemoveAt(_currentPath.Count - 1);
+        if (_board[square.Mask] != Piece.Empty)
             return;
-        }
-
-        if (res == 0) return;
-
-        if (res == 1)
-        {
-            SelectedSquare.Deselect();
-            _currentPath.Clear();
-            Console.WriteLine($"{_bot.Evaluate(_board, 6)}");
-        }
+        res = MoveTo(square.Index);
+        if (res == -1 || res == 0)
+            return;
+        Squares[_path[0]].Deselect();
+        _path.Clear();
     }
 
-    private int MoveTo(Pos pos)
+    private int MoveTo(byte index)
     {
-        var last = _currentPath[^1];
-        _currentPath.Add(pos);
-        var moves = _board.FindMovesStartingWith(_currentPath, _possibleMoves);
+        var last = _path[^1];
+        _path.Add(index);
+        var moves = _board.FindMovesStartingWith(_path, _moves);
         if (moves.Count == 0)
         {
-            _currentPath.RemoveAt(_currentPath.Count - 1);
+            _path.RemoveAt(_path.Count - 1);
             return -1;
         }
 
-        _possibleMoves = moves;
-
-        if (moves[0].Path.Count == _currentPath.Count)
+        _moves = moves;
+        if (_moves[0].Path.Count == _path.Count)
         {
-            GetSquare(pos).PutPiece(pos.IsInKingsRow ? SelectedPiece.Promote() : SelectedPiece);
-            GetSquare(last).RemovePiece();
-            if (moves[0].Captures.Count != 0)
-                GetSquare((last + pos) / 2).RemovePiece();
+            Squares[index].PutPiece(_board[_path[0]]);
+            Squares[last].RemovePiece();
+            if (moves[0].Captures != 0)
+                Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
             return 1;
         }
 
-        GetSquare(_currentPath[^1]).PutPiece(SelectedPiece);
-        GetSquare(_currentPath[^2]).RemovePiece();
-        GetSquare((last + pos) / 2).RemovePiece();
+        Squares[index].PutPiece(_board[_path[0]]);
+        Squares[last].RemovePiece();
+        Squares[(last + index) / 2].RemovePiece();
         return 0;
     }
 
