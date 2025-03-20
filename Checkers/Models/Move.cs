@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Checkers.Models;
 
-public class Move : IEquatable<Move>
+public class Move : IEquatable<Move>, IComparable<Move>
 {
     public Move(List<byte> path, ulong captures)
     {
@@ -24,6 +24,12 @@ public class Move : IEquatable<Move>
     public byte Start => Path[0];
     public byte End => Path[^1];
 
+    public int CompareTo(Move? other)
+    {
+        if (other is null)
+            return 1;
+        return Path.Count.CompareTo(other.Path.Count);
+    }
 
     public bool Equals(Move? other)
     {

@@ -235,6 +235,8 @@ public class Board
                 AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
             }
         }
+
+        moves.Sort((m1, m2) => m2.CompareTo(m1));
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path)

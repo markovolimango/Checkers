@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using Checkers.Models;
 
 namespace Checkers.Bot;
@@ -7,6 +9,16 @@ public class Bot
     private static readonly float[] RowMultipliers = [0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.4f];
 
     public float Evaluate(Board board, int depth)
+    {
+        var sw = new Stopwatch();
+        sw.Start();
+        var res = Evaluate(board, depth, float.MinValue, float.MaxValue);
+        sw.Stop();
+        Console.WriteLine($"Time took: {sw.Elapsed.TotalMilliseconds}ms");
+        return res;
+    }
+
+    public float Evaluate(Board board, int depth, float alpha, float beta)
     {
         if (depth == 0)
             return Evaluate(board);
@@ -19,18 +31,26 @@ public class Bot
             {
                 var newBoard = new Board(board);
                 newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1);
+                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
                 if (eval < res)
                     res = eval;
+                if (eval < beta)
+                    beta = eval;
+                if (beta <= alpha)
+                    break;
             }
 
             foreach (var move in board.MenMoves)
             {
                 var newBoard = new Board(board);
                 newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1);
+                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
                 if (eval < res)
                     res = eval;
+                if (eval < beta)
+                    beta = eval;
+                if (beta <= alpha)
+                    break;
             }
         }
         else
@@ -40,18 +60,26 @@ public class Bot
             {
                 var newBoard = new Board(board);
                 newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1);
+                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
                 if (eval > res)
                     res = eval;
+                if (eval > alpha)
+                    alpha = eval;
+                if (beta <= alpha)
+                    break;
             }
 
             foreach (var move in board.MenMoves)
             {
                 var newBoard = new Board(board);
                 newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1);
+                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
                 if (eval > res)
                     res = eval;
+                if (eval > alpha)
+                    alpha = eval;
+                if (beta <= alpha)
+                    break;
             }
         }
 
