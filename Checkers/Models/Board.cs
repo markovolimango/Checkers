@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Console = System.Console;
 
 namespace Checkers.Models;
 
@@ -13,9 +12,6 @@ public class Board
     private const ulong LeftEdge = 0x0101010101010101;
     private const ulong RightEdge = 0x8080808080808080;
     private const ulong Edges = TopEdge | BottomEdge | LeftEdge | RightEdge;
-
-    private readonly List<Move> _kingsMoves;
-    private readonly List<Move> _menMoves;
 
     private readonly ulong[] _pieces = new ulong[5];
     private bool _hasFoundCapture;
@@ -28,8 +24,8 @@ public class Board
         _pieces[(byte)Piece.BlackKing] = 0x0000000000000000;
         _pieces[(byte)Piece.RedKing] = 0x0000000000000000;
         IsBlackTurn = false;
-        _menMoves = new List<Move>(10);
-        _kingsMoves = new List<Move>(5);
+        MenMoves = new List<Move>(10);
+        KingsMoves = new List<Move>(5);
         FindAllLegalMoves();
     }
 
@@ -38,8 +34,8 @@ public class Board
         for (var i = 0; i < 5; i++)
             _pieces[i] = other._pieces[i];
         IsBlackTurn = other.IsBlackTurn;
-        _menMoves = other._menMoves;
-        _kingsMoves = other._kingsMoves;
+        MenMoves = new List<Move>(other.MenMoves);
+        KingsMoves = new List<Move>(other.KingsMoves);
     }
 
     public Board(byte[,] pieces, bool isBlackTurn)
@@ -48,10 +44,13 @@ public class Board
         for (var col = 0; col < 8; col++)
             this[row, col] = (Piece)pieces[row, col];
         IsBlackTurn = isBlackTurn;
-        _menMoves = new List<Move>(10);
-        _kingsMoves = new List<Move>(5);
+        MenMoves = new List<Move>(10);
+        KingsMoves = new List<Move>(5);
         FindAllLegalMoves();
     }
+
+    public List<Move> KingsMoves { get; }
+    public List<Move> MenMoves { get; }
 
     public bool IsBlackTurn { get; private set; }
     private ulong BlackPieces => _pieces[(byte)Piece.BlackMan] | _pieces[(byte)Piece.BlackKing];
@@ -63,8 +62,6 @@ public class Board
     {
         get
         {
-            if ((mask & (mask - 1)) != 0)
-                throw new IndexOutOfRangeException("Invalid mask");
             for (byte i = 0; i < 5; i++)
                 if ((_pieces[i] & mask) != 0)
                     return (Piece)i;
@@ -103,6 +100,11 @@ public class Board
     public static byte ToIndex(ulong mask)
     {
         return (byte)BitOperations.TrailingZeroCount(mask);
+    }
+
+    public static byte ToIndex(int row, int col)
+    {
+        return (byte)(row * 8 + col);
     }
 
     public static (int row, int col) ToPos(ulong mask)
@@ -182,10 +184,10 @@ public class Board
             if ((captures & jump.second) != 0)
                 continue;
             hasFoundCapture = true;
-            var myPath = new List<byte>(path);
-            myPath.Add(ToIndex(jump.first));
+            path.Add(ToIndex(jump.first));
             var myCaptures = captures | jump.second;
-            AddCaptureMoves(moves, myPath, myCaptures, jump.first, piece);
+            AddCaptureMoves(moves, path, myCaptures, jump.first, piece);
+            path.RemoveAt(path.Count - 1);
         }
 
         if (!hasFoundCapture)
@@ -194,17 +196,16 @@ public class Board
 
     private void FindAllLegalMoves()
     {
-        Console.WriteLine("All legal moves:");
         _hasFoundCapture = false;
         if (IsBlackTurn)
         {
-            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, _menMoves);
-            FindLegalMoves(_pieces[(byte)Piece.BlackKing], Piece.BlackKing, _kingsMoves);
+            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, MenMoves);
+            FindLegalMoves(_pieces[(byte)Piece.BlackKing], Piece.BlackKing, KingsMoves);
         }
         else
         {
-            FindLegalMoves(_pieces[(byte)Piece.RedMan], Piece.RedMan, _menMoves);
-            FindLegalMoves(_pieces[(byte)Piece.RedKing], Piece.RedKing, _kingsMoves);
+            FindLegalMoves(_pieces[(byte)Piece.RedMan], Piece.RedMan, MenMoves);
+            FindLegalMoves(_pieces[(byte)Piece.RedKing], Piece.RedKing, KingsMoves);
         }
     }
 
@@ -226,23 +227,19 @@ public class Board
             {
                 if (!_hasFoundCapture)
                 {
-                    _menMoves.Clear();
-                    _kingsMoves.Clear();
+                    MenMoves.Clear();
+                    KingsMoves.Clear();
                     _hasFoundCapture = true;
                 }
 
                 AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
             }
         }
-
-        Console.WriteLine($"{piece} moves:");
-        foreach (var move in moves)
-            Console.WriteLine(move);
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path)
     {
-        return FindMovesStartingWith(path, _kingsMoves).Concat(FindMovesStartingWith(path, _menMoves)).ToList();
+        return FindMovesStartingWith(path, KingsMoves).Concat(FindMovesStartingWith(path, MenMoves)).ToList();
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path, List<Move> moves)

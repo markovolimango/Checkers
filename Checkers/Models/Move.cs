@@ -11,6 +11,14 @@ public class Move : IEquatable<Move>
         Captures = captures;
     }
 
+    public Move(List<(int row, int col)> path)
+    {
+        Path = new List<byte>(path.Count);
+        foreach (var pos in path)
+            Path.Add(Board.ToIndex(pos.row, pos.col));
+        Captures = 0;
+    }
+
     public List<byte> Path { get; }
     public ulong Captures { get; }
     public byte Start => Path[0];
@@ -19,7 +27,7 @@ public class Move : IEquatable<Move>
 
     public bool Equals(Move? other)
     {
-        if (other is null || Path.Count != other.Path.Count || Captures != other.Captures)
+        if (other is null || Path.Count != other.Path.Count)
             return false;
 
         for (var i = 0; i < Path.Count; i++)

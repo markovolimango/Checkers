@@ -8,7 +8,7 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly Board _board = new(new byte[,]
+    /*private readonly Board _board = new(new byte[,]
     {
         { 0, 3, 0, 3, 0, 1, 0, 3 },
         { 3, 0, 0, 0, 3, 0, 3, 0 },
@@ -18,9 +18,10 @@ public class MainWindowViewModel : ViewModelBase
         { 1, 0, 1, 0, 3, 0, 1, 0 },
         { 0, 0, 0, 1, 0, 0, 0, 1 },
         { 1, 0, 1, 0, 1, 0, 1, 0 }
-    }, false);
+    }, false);*/
 
-    //private readonly Board _board = new();
+    private readonly Board _board = new();
+    private readonly Bot.Bot _bot;
     private readonly List<byte> _path = new(4);
     private List<Move> _moves = new(10);
 
@@ -41,6 +42,7 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         ExportCommand = new RelayCommand(ExportBoardState);
+        _bot = new Bot.Bot();
     }
 
     public Square[] Squares { get; }
@@ -70,10 +72,17 @@ public class MainWindowViewModel : ViewModelBase
 
             _moves = _board.FindMovesStartingWith(_path);
             res = MoveTo(square.Index);
-            if (res == -1 || res == 1)
+            if (res == -1)
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
+            }
+
+            if (res == 1)
+            {
+                Squares[_path[0]].Deselect();
+                _path.Clear();
+                Console.WriteLine($"Evaluation: {_bot.Evaluate(_board, 6)}");
             }
 
             return;
@@ -86,6 +95,7 @@ public class MainWindowViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
+        Console.WriteLine($"Evaluation: {_bot.Evaluate(_board, 6)}");
     }
 
     private int MoveTo(byte index)
