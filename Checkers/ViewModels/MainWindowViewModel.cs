@@ -8,7 +8,19 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly Board _board = new();
+    private readonly Board _board = new(new byte[,]
+    {
+        { 0, 3, 0, 3, 0, 1, 0, 3 },
+        { 3, 0, 0, 0, 3, 0, 3, 0 },
+        { 0, 3, 0, 0, 0, 3, 0, 3 },
+        { 0, 0, 0, 0, 3, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 1, 0, 0 },
+        { 1, 0, 1, 0, 3, 0, 1, 0 },
+        { 0, 0, 0, 1, 0, 0, 0, 1 },
+        { 1, 0, 1, 0, 1, 0, 1, 0 }
+    }, false);
+
+    //private readonly Board _board = new();
     private readonly List<byte> _path = new(4);
     private List<Move> _moves = new(10);
 
@@ -39,7 +51,7 @@ public class MainWindowViewModel : ViewModelBase
         var piece = _board[square.Mask];
         if (_path.Count == 0)
         {
-            if (piece == Piece.Empty || (sbyte)piece > 0 == _board.IsBlackTurn)
+            if (piece == Piece.Empty || piece.IsBlack() != _board.IsBlackTurn)
                 return;
             _path.Add(square.Index);
             square.Select();

@@ -1,4 +1,4 @@
-namespace Tests.Models;
+namespace Tests;
 
 [TestFixture]
 public class BoardTests

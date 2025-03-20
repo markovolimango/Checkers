@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Console = System.Console;
 
@@ -12,29 +13,51 @@ public class Board
     private const ulong LeftEdge = 0x0101010101010101;
     private const ulong RightEdge = 0x8080808080808080;
     private const ulong Edges = TopEdge | BottomEdge | LeftEdge | RightEdge;
-    private readonly List<Move> _legalMoves = new(15);
 
-    private ulong _blackKings;
-    private ulong _blackMen;
-    private ulong _emptySquares;
+    private readonly List<Move> _kingsMoves;
+    private readonly List<Move> _menMoves;
 
-    private ulong _redKings;
-    private ulong _redMen;
+    private readonly ulong[] _pieces = new ulong[5];
+    private bool _hasFoundCapture;
 
     public Board()
     {
-        _emptySquares = 0xAA55AAFFFF55AA55;
-        _blackMen = 0x0000000000AA55AA;
-        _redMen = 0x55AA550000000000;
-        _blackKings = 0x0000000000000000;
-        _redKings = 0x0000000000000000;
+        _pieces[(byte)Piece.Empty] = 0xAA55AAFFFF55AA55;
+        _pieces[(byte)Piece.BlackMan] = 0x0000000000AA55AA;
+        _pieces[(byte)Piece.RedMan] = 0x55AA550000000000;
+        _pieces[(byte)Piece.BlackKing] = 0x0000000000000000;
+        _pieces[(byte)Piece.RedKing] = 0x0000000000000000;
         IsBlackTurn = false;
+        _menMoves = new List<Move>(10);
+        _kingsMoves = new List<Move>(5);
+        FindAllLegalMoves();
+    }
+
+    public Board(Board other)
+    {
+        for (var i = 0; i < 5; i++)
+            _pieces[i] = other._pieces[i];
+        IsBlackTurn = other.IsBlackTurn;
+        _menMoves = other._menMoves;
+        _kingsMoves = other._kingsMoves;
+    }
+
+    public Board(byte[,] pieces, bool isBlackTurn)
+    {
+        for (var row = 0; row < 8; row++)
+        for (var col = 0; col < 8; col++)
+            this[row, col] = (Piece)pieces[row, col];
+        IsBlackTurn = isBlackTurn;
+        _menMoves = new List<Move>(10);
+        _kingsMoves = new List<Move>(5);
         FindAllLegalMoves();
     }
 
     public bool IsBlackTurn { get; private set; }
-    private ulong BlackPieces => _blackMen & _blackKings;
-    private ulong RedPieces => _redMen & _redKings;
+    private ulong BlackPieces => _pieces[(byte)Piece.BlackMan] | _pieces[(byte)Piece.BlackKing];
+    private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
+    public bool IsBlackWin => BlackPieces == 0;
+    public bool IsRedWin => RedPieces == 0;
 
     public Piece this[ulong mask]
     {
@@ -42,52 +65,34 @@ public class Board
         {
             if ((mask & (mask - 1)) != 0)
                 throw new IndexOutOfRangeException("Invalid mask");
-            if ((_emptySquares & mask) != 0) return Piece.Empty;
-            if ((_blackMen & mask) != 0) return Piece.BlackMan;
-            if ((_redMen & mask) != 0) return Piece.RedMan;
-            if ((_blackKings & mask) != 0) return Piece.BlackKing;
-            if ((_redKings & mask) != 0) return Piece.RedKing;
+            for (byte i = 0; i < 5; i++)
+                if ((_pieces[i] & mask) != 0)
+                    return (Piece)i;
             throw new IndexOutOfRangeException("Invalid mask");
         }
-        set
+        private set
         {
-            _emptySquares &= ~mask;
-            _blackMen &= ~mask;
-            _redMen &= ~mask;
-            _blackKings &= ~mask;
-            _redKings &= ~mask;
-
-            switch (value)
-            {
-                case Piece.Empty:
-                    _emptySquares |= mask;
-                    break;
-                case Piece.BlackMan:
-                    _blackMen |= mask;
-                    break;
-                case Piece.RedMan:
-                    _redMen |= mask;
-                    break;
-                case Piece.BlackKing:
-                    _blackKings |= mask;
-                    break;
-                case Piece.RedKing:
-                    _redKings |= mask;
-                    break;
-            }
+            var piece = (byte)value;
+            if (((mask & TopEdge) != 0 && value == Piece.RedMan) ||
+                ((mask & BottomEdge) != 0 && value == Piece.BlackMan))
+                piece++;
+            var inverse = ~mask;
+            for (byte i = 0; i < 5; i++)
+                _pieces[i] &= inverse;
+            _pieces[piece] |= mask;
         }
     }
 
     public Piece this[byte index]
     {
         get => this[1UL << index];
-        set => this[1UL << index] = value;
+        private set => this[1UL << index] = value;
     }
 
     public Piece this[int row, int col]
     {
         get => this[ToMask(row, col)];
-        set => this[ToMask(row, col)] = value;
+        private set => this[ToMask(row, col)] = value;
     }
 
     public static ulong ToMask(int row, int col)
@@ -102,7 +107,7 @@ public class Board
 
     public static (int row, int col) ToPos(ulong mask)
     {
-        var index = BitOperations.TrailingZeroCount(mask);
+        var index = ToIndex(mask);
         return (index / 8, index % 8);
     }
 
@@ -113,9 +118,6 @@ public class Board
 
     private ulong FindTargetSquares(ulong mask, Piece piece)
     {
-        if (piece == Piece.Empty)
-            return 0;
-
         ulong res = 0;
         if ((mask & TopEdge) == 0 && piece != Piece.BlackMan)
         {
@@ -133,32 +135,32 @@ public class Board
                 res |= mask << 9;
         }
 
-        if ((sbyte)piece < 0)
-            return res & ~_blackMen & ~_blackKings;
-        return res & ~_redMen & ~_redKings;
+        if (piece.IsBlack())
+            return res & ~BlackPieces;
+        return res & ~RedPieces;
     }
 
     private (ulong destinations, ulong captures) FindJumps(ulong mask, Piece piece, ulong targets)
     {
         ulong captures = 0, destinations = 0;
-        if ((sbyte)piece > 0)
-            targets &= _blackMen;
+        if (!piece.IsBlack())
+            targets &= BlackPieces;
         else
-            targets &= _redMen;
+            targets &= RedPieces;
 
         foreach (var enemyTarget in GetPieceMasks(targets))
         {
             if ((enemyTarget & Edges) != 0)
                 continue;
-            var dir = BitOperations.TrailingZeroCount(enemyTarget) - BitOperations.TrailingZeroCount(mask);
-            ulong t = 0;
+            var dir = ToIndex(enemyTarget) - ToIndex(mask);
+            ulong dest = 0;
             if (dir >= 0)
-                t = (enemyTarget << dir) & _emptySquares;
+                dest = (enemyTarget << dir) & _pieces[(byte)Piece.Empty];
             else
-                t = (enemyTarget >> -dir) & _emptySquares;
-            if (t != destinations)
+                dest = (enemyTarget >> -dir) & _pieces[(byte)Piece.Empty];
+            if (dest != 0)
             {
-                destinations |= t;
+                destinations |= dest;
                 captures |= enemyTarget;
             }
         }
@@ -166,78 +168,81 @@ public class Board
         return (destinations, captures);
     }
 
-    private void DFS(List<Move> moves, List<byte> path, ulong captures, ulong mask, Piece piece)
+    private void AddCaptureMoves(List<Move> moves, List<byte> path, ulong captures, ulong mask, Piece piece)
     {
-        var jumps = FindJumps(mask, piece, FindTargetSquares(mask, piece));
+        AddCaptureMoves(FindJumps(mask, piece, FindTargetSquares(mask, piece)), moves, path, captures, mask, piece);
+    }
 
+    private void AddCaptureMoves((ulong, ulong) jumps, List<Move> moves, List<byte> path, ulong captures, ulong mask,
+        Piece piece)
+    {
         var hasFoundCapture = false;
         foreach (var jump in GetPieceMasks(jumps))
         {
-            if ((captures & jump.first) != 0)
+            if ((captures & jump.second) != 0)
                 continue;
             hasFoundCapture = true;
             var myPath = new List<byte>(path);
             myPath.Add(ToIndex(jump.first));
             var myCaptures = captures | jump.second;
-            DFS(moves, myPath, myCaptures, jump.first, piece);
+            AddCaptureMoves(moves, myPath, myCaptures, jump.first, piece);
         }
 
-        if (!hasFoundCapture) moves.Add(new Move(path, captures));
+        if (!hasFoundCapture)
+            moves.Add(new Move(path, captures));
     }
 
     private void FindAllLegalMoves()
     {
-        _legalMoves.Clear();
         Console.WriteLine("All legal moves:");
+        _hasFoundCapture = false;
         if (IsBlackTurn)
         {
-            _legalMoves.AddRange(FindLegalMoves(_blackMen, Piece.BlackMan));
-            _legalMoves.AddRange(FindLegalMoves(_blackKings, Piece.BlackKing));
+            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, _menMoves);
+            FindLegalMoves(_pieces[(byte)Piece.BlackKing], Piece.BlackKing, _kingsMoves);
         }
         else
         {
-            _legalMoves.AddRange(FindLegalMoves(_redMen, Piece.RedMan));
-            _legalMoves.AddRange(FindLegalMoves(_redKings, Piece.RedKing));
+            FindLegalMoves(_pieces[(byte)Piece.RedMan], Piece.RedMan, _menMoves);
+            FindLegalMoves(_pieces[(byte)Piece.RedKing], Piece.RedKing, _kingsMoves);
         }
     }
 
-    private List<Move> FindLegalMoves(ulong pieces, Piece piece)
+    private void FindLegalMoves(ulong pieces, Piece piece, List<Move> moves)
     {
-        List<Move> res = new(10);
-        var hasFoundCapture = false;
+        moves.Clear();
         foreach (var mask in GetPieceMasks(pieces))
         {
             var targets = FindTargetSquares(mask, piece);
             var jumps = FindJumps(mask, piece, targets);
             if (jumps.destinations == 0)
             {
-                if (hasFoundCapture)
+                if (_hasFoundCapture)
                     continue;
-                foreach (var emptyTarget in GetPieceMasks(targets & _emptySquares))
-                    res.Add(new Move([ToIndex(mask), ToIndex(emptyTarget)], 0));
+                foreach (var emptyTarget in GetPieceMasks(targets & _pieces[(byte)Piece.Empty]))
+                    moves.Add(new Move([ToIndex(mask), ToIndex(emptyTarget)], 0));
             }
             else
             {
-                if (!hasFoundCapture)
+                if (!_hasFoundCapture)
                 {
-                    res.Clear();
-                    hasFoundCapture = true;
+                    _menMoves.Clear();
+                    _kingsMoves.Clear();
+                    _hasFoundCapture = true;
                 }
 
-                Console.WriteLine("DFS: ");
-                DFS(res, [ToIndex(mask)], 0, mask, piece);
+                AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
             }
         }
 
-        Console.WriteLine("Moves:");
-        foreach (var move in res)
+        Console.WriteLine($"{piece} moves:");
+        foreach (var move in moves)
             Console.WriteLine(move);
-        return res;
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path)
     {
-        return FindMovesStartingWith(path, _legalMoves);
+        return FindMovesStartingWith(path, _kingsMoves).Concat(FindMovesStartingWith(path, _menMoves)).ToList();
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path, List<Move> moves)
@@ -278,7 +283,6 @@ public class Board
         while (pieces != 0)
         {
             yield return pieces & ~(pieces - 1);
-            ;
             pieces &= pieces - 1;
         }
     }
@@ -297,15 +301,34 @@ public class Board
     {
         while (pieces != 0)
         {
-            yield return (byte)BitOperations.TrailingZeroCount(pieces);
+            yield return ToIndex(pieces);
             pieces &= pieces - 1;
         }
     }
 
-    private bool CheckIfValid()
+    public IEnumerable<byte> GetPieceIndexes(Piece piece)
     {
-        if ((_emptySquares & _blackMen & _redMen & _blackKings & _redKings) != 0x0000000000000000) return false;
-        if ((_emptySquares | _blackMen | _redMen | _blackKings | _redKings) != 0xFFFFFFFFFFFFFFFF) return false;
-        return true;
+        var pieces = _pieces[(byte)piece];
+        while (pieces != 0)
+        {
+            yield return ToIndex(pieces & ~(pieces - 1));
+            pieces &= pieces - 1;
+        }
+    }
+
+    public override string ToString()
+    {
+        var res = "{ " + (byte)this[0] + ", ";
+        for (byte i = 1; i < 63; i++)
+        {
+            res += (byte)this[i];
+            if (i % 8 == 7)
+                res += " },\n{ ";
+            else
+                res += ", ";
+        }
+
+        res += (byte)this[63] + " }";
+        return res;
     }
 }
