@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Checkers.Models;
 
@@ -18,75 +19,72 @@ public class Bot
         return res;
     }
 
-    public float Evaluate(Board board, int depth, float alpha, float beta)
+    private float Minimize(Board board, int depth, float alpha, float beta)
     {
         if (depth == 0)
-            return Evaluate(board);
+            return EvaluateSimple(board);
 
-        float res;
-        if (board.IsBlackTurn)
+        var res = ProcessMovesMin(board, depth, alpha, ref beta, board.KingsMoves);
+        res = float.Min(res, ProcessMovesMin(board, depth, alpha, ref beta, board.MenMoves));
+
+        return res;
+    }
+
+    private float ProcessMovesMin(Board board, int depth, float alpha, ref float beta, List<Move> moves)
+    {
+        var res = float.MaxValue;
+        foreach (var move in moves)
         {
-            res = float.MaxValue;
-            foreach (var move in board.KingsMoves)
-            {
-                var newBoard = new Board(board);
-                newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
-                if (eval < res)
-                    res = eval;
-                if (eval < beta)
-                    beta = eval;
-                if (beta <= alpha)
-                    break;
-            }
-
-            foreach (var move in board.MenMoves)
-            {
-                var newBoard = new Board(board);
-                newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
-                if (eval < res)
-                    res = eval;
-                if (eval < beta)
-                    beta = eval;
-                if (beta <= alpha)
-                    break;
-            }
-        }
-        else
-        {
-            res = float.MinValue;
-            foreach (var move in board.KingsMoves)
-            {
-                var newBoard = new Board(board);
-                newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
-                if (eval > res)
-                    res = eval;
-                if (eval > alpha)
-                    alpha = eval;
-                if (beta <= alpha)
-                    break;
-            }
-
-            foreach (var move in board.MenMoves)
-            {
-                var newBoard = new Board(board);
-                newBoard.MakeMove(move);
-                var eval = Evaluate(newBoard, depth - 1, alpha, beta);
-                if (eval > res)
-                    res = eval;
-                if (eval > alpha)
-                    alpha = eval;
-                if (beta <= alpha)
-                    break;
-            }
+            var newBoard = new Board(board);
+            newBoard.MakeMove(move);
+            var eval = Maximize(newBoard, depth - 1, alpha, beta);
+            if (eval < res)
+                res = eval;
+            if (eval < beta)
+                beta = eval;
+            if (beta <= alpha)
+                break;
         }
 
         return res;
     }
 
-    private float Evaluate(Board board)
+    private float Maximize(Board board, int depth, float alpha, float beta)
+    {
+        if (depth == 0)
+            return EvaluateSimple(board);
+
+        var res = ProcessMovesMax(board, depth, ref alpha, beta, board.KingsMoves);
+        res = float.Max(res, ProcessMovesMax(board, depth, ref alpha, beta, board.MenMoves));
+
+        return res;
+    }
+
+    private float ProcessMovesMax(Board board, int depth, ref float alpha, float beta, List<Move> moves)
+    {
+        var res = float.MinValue;
+        foreach (var move in moves)
+        {
+            var newBoard = new Board(board);
+            newBoard.MakeMove(move);
+            var eval = Minimize(newBoard, depth - 1, alpha, beta);
+            if (eval > res)
+                res = eval;
+            if (eval > alpha)
+                alpha = eval;
+            if (beta <= alpha)
+                break;
+        }
+
+        return res;
+    }
+
+    private float Evaluate(Board board, int depth, float alpha, float beta)
+    {
+        return board.IsBlackTurn ? Minimize(board, depth - 1, alpha, beta) : Maximize(board, depth - 1, alpha, beta);
+    }
+
+    private float EvaluateSimple(Board board)
     {
         if (board.IsRedWin)
             return 200;
