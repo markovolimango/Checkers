@@ -21,7 +21,6 @@ public class MainWindowViewModel : ViewModelBase
     }, false);*/
 
     private readonly Board _board = new();
-    private readonly Bot.Bot _bot;
     private readonly List<byte> _path = new(4);
     private List<Move> _moves = new(10);
 
@@ -42,7 +41,6 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         ExportCommand = new RelayCommand(ExportBoardState);
-        _bot = new Bot.Bot();
     }
 
     public Square[] Squares { get; }
@@ -82,7 +80,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
-                Console.WriteLine($"Evaluation: {_bot.Evaluate(_board, 6)}");
+                Console.WriteLine($"Evaluation: {Engine.Engine.Evaluate(_board, 6)}");
             }
 
             return;
@@ -95,7 +93,7 @@ public class MainWindowViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
-        Console.WriteLine($"Evaluation: {_bot.Evaluate(_board, 6)}");
+        Console.WriteLine($"Evaluation: {Engine.Engine.Evaluate(_board, 6)}");
     }
 
     private int MoveTo(byte index)

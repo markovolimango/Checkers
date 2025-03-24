@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Checkers.Models;
 
-namespace Checkers.Bot;
+namespace Checkers.Engine;
 
-public class Bot
+public static class Engine
 {
     private static readonly float[] RowMultipliers = [0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.4f];
 
-    public float Evaluate(Board board, int depth)
+    public static float Evaluate(Board board, int depth)
     {
         var sw = new Stopwatch();
         sw.Start();
@@ -19,7 +19,7 @@ public class Bot
         return res;
     }
 
-    private float Minimize(Board board, int depth, float alpha, float beta)
+    private static float Minimize(Board board, int depth, float alpha, float beta)
     {
         if (depth == 0)
             return EvaluateSimple(board);
@@ -30,7 +30,7 @@ public class Bot
         return res;
     }
 
-    private float ProcessMovesMin(Board board, int depth, float alpha, ref float beta, List<Move> moves)
+    private static float ProcessMovesMin(Board board, int depth, float alpha, ref float beta, List<Move> moves)
     {
         var res = float.MaxValue;
         foreach (var move in moves)
@@ -49,7 +49,7 @@ public class Bot
         return res;
     }
 
-    private float Maximize(Board board, int depth, float alpha, float beta)
+    private static float Maximize(Board board, int depth, float alpha, float beta)
     {
         if (depth == 0)
             return EvaluateSimple(board);
@@ -60,7 +60,7 @@ public class Bot
         return res;
     }
 
-    private float ProcessMovesMax(Board board, int depth, ref float alpha, float beta, List<Move> moves)
+    private static float ProcessMovesMax(Board board, int depth, ref float alpha, float beta, List<Move> moves)
     {
         var res = float.MinValue;
         foreach (var move in moves)
@@ -79,12 +79,12 @@ public class Bot
         return res;
     }
 
-    private float Evaluate(Board board, int depth, float alpha, float beta)
+    private static float Evaluate(Board board, int depth, float alpha, float beta)
     {
         return board.IsBlackTurn ? Minimize(board, depth - 1, alpha, beta) : Maximize(board, depth - 1, alpha, beta);
     }
 
-    private float EvaluateSimple(Board board)
+    private static float EvaluateSimple(Board board)
     {
         if (board.IsRedWin)
             return 200;
