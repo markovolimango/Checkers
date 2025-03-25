@@ -47,7 +47,7 @@ public class BoardTests
     [TestCaseSource(nameof(PosIndexer_GetsCorrectPiece_Invalid_TestData))]
     public void PosIndexer_GetsCorrectPiece(Board board, int row, int col, Piece piece)
     {
-        Assert.That(board[row,col], Is.EqualTo(piece));
+        Assert.That(board[row, col], Is.EqualTo(piece));
     }
 
     [Test]

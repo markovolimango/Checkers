@@ -8,19 +8,19 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    /*private readonly Board _board = new(new byte[,]
+    private readonly Board _board = new(new byte[,]
     {
-        { 0, 3, 0, 3, 0, 1, 0, 3 },
-        { 3, 0, 0, 0, 3, 0, 3, 0 },
-        { 0, 3, 0, 0, 0, 3, 0, 3 },
-        { 0, 0, 0, 0, 3, 0, 0, 0 },
-        { 0, 0, 0, 0, 0, 1, 0, 0 },
-        { 1, 0, 1, 0, 3, 0, 1, 0 },
-        { 0, 0, 0, 1, 0, 0, 0, 1 },
-        { 1, 0, 1, 0, 1, 0, 1, 0 }
-    }, false);*/
+        { 0, 0, 0, 3, 0, 3, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 3, 0, 0 },
+        { 0, 0, 1, 0, 0, 0, 3, 0 },
+        { 0, 3, 0, 0, 0, 3, 0, 0 },
+        { 0, 0, 0, 0, 1, 0, 0, 0 },
+        { 0, 1, 0, 1, 0, 0, 0, 1 },
+        { 1, 0, 0, 0, 0, 0, 0, 0 }
+    }, false);
 
-    private readonly Board _board = new();
+    //private readonly Board _board = new();
     private readonly List<byte> _path = new(4);
     private List<Move> _moves = new(10);
 
@@ -39,6 +39,8 @@ public class MainWindowViewModel : ViewModelBase
                 isDark = !isDark;
             }
         }
+
+        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 5000)}");
 
         ExportCommand = new RelayCommand(ExportBoardState);
     }
@@ -80,7 +82,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
-                Console.WriteLine($"Evaluation: {Engine.Engine.Evaluate(_board, 6)}");
+                Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
             }
 
             return;
@@ -93,7 +95,7 @@ public class MainWindowViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
-        Console.WriteLine($"Evaluation: {Engine.Engine.Evaluate(_board, 6)}");
+        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
     }
 
     private int MoveTo(byte index)

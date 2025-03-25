@@ -13,6 +13,10 @@ public class Board
     private const ulong RightEdge = 0x8080808080808080;
     private const ulong Edges = TopEdge | BottomEdge | LeftEdge | RightEdge;
 
+
+    public readonly List<Move> KingsMoves;
+    public readonly List<Move> MenMoves;
+
     private readonly ulong[] _pieces = new ulong[5];
     private bool _hasFoundCapture;
 
@@ -49,14 +53,11 @@ public class Board
         FindAllLegalMoves();
     }
 
-    public List<Move> KingsMoves { get; }
-    public List<Move> MenMoves { get; }
-
     public bool IsBlackTurn { get; private set; }
     private ulong BlackPieces => _pieces[(byte)Piece.BlackMan] | _pieces[(byte)Piece.BlackKing];
     private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
-    public bool IsBlackWin => BlackPieces == 0;
-    public bool IsRedWin => RedPieces == 0;
+    public bool IsBlackWin => BlackPieces == 0 || (!IsBlackTurn && MenMoves.Count == 0 && KingsMoves.Count == 0);
+    public bool IsRedWin => RedPieces == 0 || (IsBlackTurn && MenMoves.Count == 0 && KingsMoves.Count == 0);
 
     public Piece this[ulong mask]
     {
@@ -199,13 +200,13 @@ public class Board
         _hasFoundCapture = false;
         if (IsBlackTurn)
         {
-            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, MenMoves);
             FindLegalMoves(_pieces[(byte)Piece.BlackKing], Piece.BlackKing, KingsMoves);
+            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, MenMoves);
         }
         else
         {
-            FindLegalMoves(_pieces[(byte)Piece.RedMan], Piece.RedMan, MenMoves);
             FindLegalMoves(_pieces[(byte)Piece.RedKing], Piece.RedKing, KingsMoves);
+            FindLegalMoves(_pieces[(byte)Piece.RedMan], Piece.RedMan, MenMoves);
         }
     }
 
@@ -235,8 +236,8 @@ public class Board
                 AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
             }
         }
-
-        moves.Sort((m1, m2) => m2.CompareTo(m1));
+        
+        moves.Sort((a, b) => b.CompareTo(a));
     }
 
     public List<Move> FindMovesStartingWith(List<byte> path)
