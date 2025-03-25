@@ -40,7 +40,7 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
 
-        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 5000)}");
+        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
 
         ExportCommand = new RelayCommand(ExportBoardState);
     }
