@@ -24,7 +24,7 @@ public static class Engine
 
         try
         {
-            for (var depth = 1; depth <= maxDepth; depth++)
+            for (var depth = 1; depth <= 10; depth++)
             {
                 var (score, move) = EvaluateWithDepth(board, depth, cts.Token);
                 bestScore = score;
@@ -106,16 +106,10 @@ public static class Engine
 
         if (depth == 0)
             return EvaluateSimple(board);
+        var moves = new List<Move>();
+        moves.AddRange(board.KingsMoves);
+        moves.AddRange(board.MenMoves);
 
-        var res = ProcessMovesMin(board, depth, alpha, ref beta, board.KingsMoves, cancellationToken);
-        res = float.Min(res, ProcessMovesMin(board, depth, alpha, ref beta, board.MenMoves, cancellationToken));
-
-        return res;
-    }
-
-    private static float ProcessMovesMin(Board board, int depth, float alpha, ref float beta, List<Move> moves,
-        CancellationToken cancellationToken)
-    {
         var res = 200f;
         foreach (var move in moves)
         {
@@ -142,15 +136,10 @@ public static class Engine
         if (depth == 0)
             return EvaluateSimple(board);
 
-        var res = ProcessMovesMax(board, depth, ref alpha, beta, board.KingsMoves, cancellationToken);
-        res = float.Max(res, ProcessMovesMax(board, depth, ref alpha, beta, board.MenMoves, cancellationToken));
+        var moves = new List<Move>();
+        moves.AddRange(board.KingsMoves);
+        moves.AddRange(board.MenMoves);
 
-        return res;
-    }
-
-    private static float ProcessMovesMax(Board board, int depth, ref float alpha, float beta, List<Move> moves,
-        CancellationToken cancellationToken)
-    {
         var res = -200f;
         foreach (var move in moves)
         {
@@ -172,10 +161,12 @@ public static class Engine
 
     private static float EvaluateSimple(Board board)
     {
-        if (board.IsRedWin) 
-            return 200f;
-        if (board.IsBlackWin)
-            return -200f;
+        if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
+        {
+            if (board.IsBlackTurn)
+                return 200;
+            return -200;
+        }
 
         var res = 0f;
         foreach (var index in board.GetPieceIndexes(Piece.RedMan))
