@@ -13,23 +13,23 @@ public class Board
     private const ulong RightEdge = 0x8080808080808080;
     private const ulong Edges = TopEdge | BottomEdge | LeftEdge | RightEdge;
 
+    private readonly ulong[] _pieces = new ulong[5];
+
 
     public readonly List<Move> KingsMoves;
     public readonly List<Move> MenMoves;
-
-    private readonly ulong[] _pieces = new ulong[5];
     private bool _hasFoundCapture;
 
     public Board()
     {
         _pieces[(byte)Piece.Empty] = 0xAA55AAFFFF55AA55;
-        _pieces[(byte)Piece.BlackMan] = 0x0000000000AA55AA;
+        _pieces[(byte)Piece.WhiteMan] = 0x0000000000AA55AA;
         _pieces[(byte)Piece.RedMan] = 0x55AA550000000000;
-        _pieces[(byte)Piece.BlackKing] = 0x0000000000000000;
+        _pieces[(byte)Piece.WhiteKing] = 0x0000000000000000;
         _pieces[(byte)Piece.RedKing] = 0x0000000000000000;
-        IsBlackTurn = false;
+        IsWhiteTurn = false;
         MenMoves = new List<Move>(10);
-        KingsMoves = new List<Move>(5);
+        KingsMoves = new List<Move>(10);
         FindAllLegalMoves();
     }
 
@@ -37,27 +37,25 @@ public class Board
     {
         for (var i = 0; i < 5; i++)
             _pieces[i] = other._pieces[i];
-        IsBlackTurn = other.IsBlackTurn;
+        IsWhiteTurn = other.IsWhiteTurn;
         MenMoves = new List<Move>(other.MenMoves);
         KingsMoves = new List<Move>(other.KingsMoves);
     }
 
-    public Board(byte[,] pieces, bool isBlackTurn)
+    public Board(byte[,] pieces, bool isWhiteTurn)
     {
         for (var row = 0; row < 8; row++)
         for (var col = 0; col < 8; col++)
             this[row, col] = (Piece)pieces[row, col];
-        IsBlackTurn = isBlackTurn;
+        IsWhiteTurn = isWhiteTurn;
         MenMoves = new List<Move>(10);
-        KingsMoves = new List<Move>(5);
+        KingsMoves = new List<Move>(10);
         FindAllLegalMoves();
     }
 
-    public bool IsBlackTurn { get; private set; }
-    private ulong BlackPieces => _pieces[(byte)Piece.BlackMan] | _pieces[(byte)Piece.BlackKing];
+    public bool IsWhiteTurn { get; private set; }
+    private ulong WhitePieces => _pieces[(byte)Piece.WhiteMan] | _pieces[(byte)Piece.WhiteKing];
     private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
-    public bool IsBlackWin => BlackPieces == 0 || (!IsBlackTurn && MenMoves.Count == 0 && KingsMoves.Count == 0);
-    public bool IsRedWin => RedPieces == 0 || (IsBlackTurn && MenMoves.Count == 0 && KingsMoves.Count == 0);
 
     public Piece this[ulong mask]
     {
@@ -72,7 +70,7 @@ public class Board
         {
             var piece = (byte)value;
             if (((mask & TopEdge) != 0 && value == Piece.RedMan) ||
-                ((mask & BottomEdge) != 0 && value == Piece.BlackMan))
+                ((mask & BottomEdge) != 0 && value == Piece.WhiteMan))
                 piece++;
             var inverse = ~mask;
             for (byte i = 0; i < 5; i++)
@@ -122,7 +120,7 @@ public class Board
     private ulong FindTargetSquares(ulong mask, Piece piece)
     {
         ulong res = 0;
-        if ((mask & TopEdge) == 0 && piece != Piece.BlackMan)
+        if ((mask & TopEdge) == 0 && piece != Piece.WhiteMan)
         {
             if ((mask & LeftEdge) == 0)
                 res |= mask >> 9;
@@ -138,16 +136,16 @@ public class Board
                 res |= mask << 9;
         }
 
-        if (piece.IsBlack())
-            return res & ~BlackPieces;
+        if (piece == Piece.WhiteMan || piece == Piece.WhiteKing)
+            return res & ~WhitePieces;
         return res & ~RedPieces;
     }
 
     private (ulong destinations, ulong captures) FindJumps(ulong mask, Piece piece, ulong targets)
     {
         ulong captures = 0, destinations = 0;
-        if (!piece.IsBlack())
-            targets &= BlackPieces;
+        if (!(piece == Piece.WhiteMan || piece == Piece.WhiteKing))
+            targets &= WhitePieces;
         else
             targets &= RedPieces;
 
@@ -198,10 +196,10 @@ public class Board
     private void FindAllLegalMoves()
     {
         _hasFoundCapture = false;
-        if (IsBlackTurn)
+        if (IsWhiteTurn)
         {
-            FindLegalMoves(_pieces[(byte)Piece.BlackKing], Piece.BlackKing, KingsMoves);
-            FindLegalMoves(_pieces[(byte)Piece.BlackMan], Piece.BlackMan, MenMoves);
+            FindLegalMoves(_pieces[(byte)Piece.WhiteKing], Piece.WhiteKing, KingsMoves);
+            FindLegalMoves(_pieces[(byte)Piece.WhiteMan], Piece.WhiteMan, MenMoves);
         }
         else
         {
@@ -236,7 +234,7 @@ public class Board
                 AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
             }
         }
-        
+
         moves.Sort((a, b) => b.CompareTo(a));
     }
 
@@ -274,7 +272,7 @@ public class Board
         this[move.Start] = Piece.Empty;
         this[move.End] = piece;
         this[move.Captures] = Piece.Empty;
-        IsBlackTurn = !IsBlackTurn;
+        IsWhiteTurn = !IsWhiteTurn;
         FindAllLegalMoves();
     }
 

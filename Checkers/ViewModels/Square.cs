@@ -17,8 +17,8 @@ public partial class Square : ViewModelBase
     private static readonly Dictionary<Piece, Bitmap?> PieceImages = new()
     {
         { Piece.Empty, null },
-        { Piece.BlackMan, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "BlackMan.png"))) },
-        { Piece.BlackKing, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "BlackKing.png"))) },
+        { Piece.WhiteMan, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "BlackMan.png"))) },
+        { Piece.WhiteKing, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "BlackKing.png"))) },
         { Piece.RedMan, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "RedMan.png"))) },
         { Piece.RedKing, new Bitmap(AssetLoader.Open(new Uri(PieceAssetsPath + "RedKing.png"))) }
     };

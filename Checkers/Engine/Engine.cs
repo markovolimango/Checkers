@@ -24,7 +24,7 @@ public static class Engine
 
         try
         {
-            for (var depth = 1; depth <= 10; depth++)
+            for (var depth = 1; depth <= maxDepth; depth++)
             {
                 var (score, move) = EvaluateWithDepth(board, depth, cts.Token);
                 bestScore = score;
@@ -70,10 +70,10 @@ public static class Engine
         });
 
         Move? bestMove = null;
-        var bestScore = board.IsBlackTurn ? 200f : -200f;
+        var bestScore = board.IsWhiteTurn ? 200f : -200f;
 
         foreach (var (score, move) in results)
-            if (board.IsBlackTurn)
+            if (board.IsWhiteTurn)
             {
                 if (score < bestScore)
                 {
@@ -95,7 +95,7 @@ public static class Engine
 
     private static float Evaluate(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
-        return board.IsBlackTurn
+        return board.IsWhiteTurn
             ? Minimize(board, depth, alpha, beta, cancellationToken)
             : Maximize(board, depth, alpha, beta, cancellationToken);
     }
@@ -163,7 +163,7 @@ public static class Engine
     {
         if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
         {
-            if (board.IsBlackTurn)
+            if (board.IsWhiteTurn)
                 return 200;
             return -200;
         }
@@ -173,9 +173,9 @@ public static class Engine
             res += 1 * RowMultipliers[index / 8];
         foreach (var unused in board.GetPieceIndexes(Piece.RedKing))
             res += 2;
-        foreach (var index in board.GetPieceIndexes(Piece.BlackMan))
+        foreach (var index in board.GetPieceIndexes(Piece.WhiteMan))
             res -= 1 * RowMultipliers[7 - index / 8];
-        foreach (var unused in board.GetPieceIndexes(Piece.BlackKing))
+        foreach (var unused in board.GetPieceIndexes(Piece.WhiteKing))
             res -= 2;
         return res;
     }

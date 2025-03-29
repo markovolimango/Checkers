@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Checkers.Models;
 using CommunityToolkit.Mvvm.Input;
@@ -8,20 +9,21 @@ namespace Checkers.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly Board _board = new(new byte[,]
+    /*private readonly Board _board = new(new byte[,]
     {
         { 0, 0, 0, 3, 0, 3, 0, 0 },
         { 0, 0, 0, 0, 0, 0, 0, 0 },
         { 0, 0, 0, 0, 0, 3, 0, 0 },
         { 0, 0, 1, 0, 0, 0, 3, 0 },
         { 0, 3, 0, 0, 0, 3, 0, 0 },
-        { 0, 0, 0, 0, 1, 0, 0, 0 },
-        { 0, 1, 0, 1, 0, 0, 0, 1 },
+        { 0, 0, 1, 0, 1, 0, 0, 0 },
+        { 0, 0, 0, 1, 0, 0, 0, 1 },
         { 1, 0, 0, 0, 0, 0, 0, 0 }
-    }, false);
+    }, true);*/
 
-    //private readonly Board _board = new();
+    private readonly Board _board = new();
     private readonly List<byte> _path = new(4);
+    private (float score, Move? move) _eval;
     private List<Move> _moves = new(10);
 
     public MainWindowViewModel()
@@ -40,7 +42,9 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
 
-        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
+        _eval = Engine.Engine.EvaluateWithTimeLimit(_board, 20, 5000);
+        Console.WriteLine(_eval);
+        MakeMove(_eval.move);
 
         ExportCommand = new RelayCommand(ExportBoardState);
     }
@@ -48,12 +52,12 @@ public class MainWindowViewModel : ViewModelBase
     public Square[] Squares { get; }
     public ICommand ExportCommand { get; }
 
-    private void OnSquareClick(Square square)
+    private async void OnSquareClick(Square square)
     {
         var piece = _board[square.Mask];
         if (_path.Count == 0)
         {
-            if (piece == Piece.Empty || piece.IsBlack() != _board.IsBlackTurn)
+            if (piece == Piece.Empty || (piece == Piece.WhiteMan || piece == Piece.WhiteKing) != _board.IsWhiteTurn)
                 return;
             _path.Add(square.Index);
             square.Select();
@@ -82,7 +86,12 @@ public class MainWindowViewModel : ViewModelBase
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
-                Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
+                await Task.Run(() =>
+                {
+                    _eval = Engine.Engine.EvaluateWithTimeLimit(_board, 20, 5000);
+                    Console.WriteLine(_eval);
+                });
+                MakeMove(_eval.move);
             }
 
             return;
@@ -95,7 +104,12 @@ public class MainWindowViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
-        Console.WriteLine($"Evaluation: {Engine.Engine.EvaluateWithTimeLimit(_board, 20, 1000)}");
+        await Task.Run(() =>
+        {
+            _eval = Engine.Engine.EvaluateWithTimeLimit(_board, 20, 5000);
+            Console.WriteLine(_eval);
+        });
+        MakeMove(_eval.move);
     }
 
     private int MoveTo(byte index)
@@ -117,13 +131,34 @@ public class MainWindowViewModel : ViewModelBase
             if (moves[0].Captures != 0)
                 Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
+            Console.WriteLine("Moved!");
             return 1;
         }
 
         Squares[index].PutPiece(_board[_path[0]]);
         Squares[last].RemovePiece();
         Squares[(last + index) / 2].RemovePiece();
+        Console.WriteLine("Moved!");
         return 0;
+    }
+
+    private async void MakeMove(Move? move)
+    {
+        if (move is null)
+            return;
+
+        Squares[move.Start].Select();
+        var piece = _board[move.Start];
+        _board.MakeMove(move);
+        for (var i = 0; i < move.Path.Count - 1; i++)
+        {
+            await Task.Delay(800);
+            Squares[move.Path[i]].RemovePiece();
+            Squares[move.Path[i + 1]].PutPiece(piece);
+            Squares[(move.Path[i] + move.Path[i + 1]) / 2].RemovePiece();
+        }
+
+        Squares[move.Start].Deselect();
     }
 
     private void ExportBoardState()
