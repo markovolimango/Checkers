@@ -9,6 +9,7 @@ namespace Checkers.ViewModels;
 public partial class GameViewModel : ViewModelBase
 {
     private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
+
     private readonly Board _board = new();
     private readonly int _botTimeLimitMs;
     private readonly Engine.Engine _engine = new();
@@ -18,12 +19,7 @@ public partial class GameViewModel : ViewModelBase
     private List<Move> _moves = [];
     [ObservableProperty] private string _turnText;
 
-    public GameViewModel(MainWindowViewModel mainWindowViewModel) : this()
-    {
-        MainWindowViewModel = mainWindowViewModel;
-    }
-
-    public GameViewModel()
+    public GameViewModel(MainWindowViewModel mainWindowViewModel)
     {
         Squares = new Square[64];
         var isDark = true;
@@ -39,8 +35,13 @@ public partial class GameViewModel : ViewModelBase
             }
         }
 
-        TurnText = YourTurnText;
-        _botTimeLimitMs = 500;
+        MainWindowViewModel = mainWindowViewModel;
+
+        _botTimeLimitMs = (int)MainWindowViewModel.SettingsData.BotThinkingTime * 1000;
+        if (MainWindowViewModel.SettingsData.IsPlayerRed)
+            IsBotThinking = false;
+        else
+            BotPlayMove(_botTimeLimitMs);
     }
 
     public Square[] Squares { get; }
@@ -136,11 +137,11 @@ public partial class GameViewModel : ViewModelBase
         _moves = moves;
         if (_moves[0].Path.Count == _path.Count)
         {
-            Squares[index].PutPiece(_board[_path[0]]);
             Squares[last].RemovePiece();
             if (moves[0].Captures != 0)
                 Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
+            Squares[index].PutPiece(_board[moves[0].End]);
             if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
                 MainWindowViewModel.LoadEndViewModel(true);
             return 1;
@@ -167,6 +168,7 @@ public partial class GameViewModel : ViewModelBase
             Squares[move.Path[i + 1]].PutPiece(piece);
         }
 
+        Squares[move.End].PutPiece(_board[move.End]);
         foreach (var index in Board.GetPieceIndexes(move.Captures))
             Squares[index].RemovePiece();
 

@@ -12,4 +12,10 @@ public class MainMenuViewModel : ViewModelBase
         if (MainWindowViewModel is null) return;
         MainWindowViewModel.LoadGameViewModel();
     }
+
+    public void LoadSettings()
+    {
+        if (MainWindowViewModel is null) return;
+        MainWindowViewModel.LoadSettingsViewModel();
+    }
 }

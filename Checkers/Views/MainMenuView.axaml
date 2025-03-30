@@ -49,7 +49,7 @@
                 TUTORIAL
             </Button>
 
-            <Button>
+            <Button Command="{Binding LoadSettings}">
                 SETTINGS
             </Button>
 

@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Checkers.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="800"
+             x:Class="Checkers.Views.SettingsView"
+             x:DataType="viewModels:SettingsViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.heading">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,0,0,15" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,15,0,10" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <StackPanel Margin="20">
+            <TextBlock Classes="heading">Game Settings</TextBlock>
+
+            <Border Classes="section">
+                <StackPanel>
+                    <TextBlock Classes="section">Bot Thinking Time</TextBlock>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,5">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                            Seconds:
+                        </TextBlock>
+
+                        <NumericUpDown Grid.Column="1"
+                                       Value="{Binding Data.BotThinkingTime}"
+                                       Minimum="0.1"
+                                       Maximum="30"
+                                       Increment="0.1" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="section">
+                <StackPanel>
+                    <TextBlock Classes="section">Player Color</TextBlock>
+
+                    <StackPanel Margin="10,5">
+                        <RadioButton GroupName="PlayerColor"
+                                     Content="Red (Plays First)"
+                                     IsChecked="{Binding Data.IsPlayerRed}" />
+
+                        <RadioButton GroupName="PlayerColor"
+                                     Content="White"
+                                     IsChecked="{Binding !Data.IsPlayerRed}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="section">
+                <StackPanel>
+                    <TextBlock Classes="section">Sound Effects</TextBlock>
+                    <CheckBox Content="Enabled" IsChecked="{Binding Data.SoundEffectsEnabled}" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+                <Button Command="{Binding SaveSettings}"
+                        Padding="20,10"
+                        CornerRadius="4"
+                        Margin="0,0,10,0">
+                    Save Settings
+                </Button>
+
+                <Button Command="{Binding Cancel}"
+                        Padding="20,10"
+                        CornerRadius="4"
+                        Margin="10,0,0,0">
+                    Cancel
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
