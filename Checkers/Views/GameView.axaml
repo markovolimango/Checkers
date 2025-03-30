@@ -10,8 +10,40 @@
         <viewModels:GameViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="*, Auto, Auto">
-        <Viewbox Grid.Row="0" Stretch="Uniform">
+    <UserControl.Styles>
+        <Style Selector="Button.game-button">
+            <Setter Property="Background" Value="#3F51B5" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="15,8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.game-button:pointerover">
+            <Setter Property="Background" Value="#303F9F" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="0,10">
+        <!-- Player turn indicator -->
+        <Border Grid.Row="0"
+                Background="#E8EAF6"
+                CornerRadius="4"
+                Padding="10"
+                Margin="0,0,0,10"
+                BorderBrush="#7986CB"
+                BorderThickness="1">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="CURRENT TURN: " VerticalAlignment="Center" />
+                <TextBlock Text="PLAYER 1" FontWeight="Bold" Foreground="#D32F2F" VerticalAlignment="Center" />
+                <!-- This would need to be bound to a property in your ViewModel -->
+            </StackPanel>
+        </Border>
+
+        <!-- Game board (unchanged as requested) -->
+        <Viewbox Grid.Row="1" Stretch="Uniform">
             <Grid Width="400" Height="400">
                 <ItemsControl ItemsSource="{Binding Squares}">
                     <ItemsControl.ItemsPanel>
@@ -46,11 +78,46 @@
             </Grid>
         </Viewbox>
 
-        <TextBlock Grid.Row="1" Margin="10">
-            Need a Hint?
-        </TextBlock>
+        <!-- Hint section -->
+        <Border Grid.Row="2"
+                Background="#FFF8E1"
+                CornerRadius="4"
+                Padding="15,10"
+                Margin="0,0,0,10"
+                BorderBrush="#FFCC80"
+                BorderThickness="1">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock FontWeight="Bold">Need a Hint?</TextBlock>
+                    <Button Content="Show Hint"
+                            Margin="10,0,0,0"
+                            Background="#FF9800"
+                            Foreground="White"
+                            Padding="8,4"
+                            CornerRadius="4" />
+                </StackPanel>
+                <TextBlock Text="Hint will appear here..."
+                           FontStyle="Italic"
+                           Margin="0,5,0,0"
+                           Foreground="#757575" />
+            </StackPanel>
+        </Border>
 
-        <Button Grid.Row="2" Command="{Binding ExportCommand}">Export Board State</Button>
+        <!-- Action buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+            <Button Classes="game-button" Command="{Binding ExportCommand}" Margin="0,0,10,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📤" Margin="0,0,5,0" />
+                    <TextBlock Text="Export Board" />
+                </StackPanel>
+            </Button>
+
+            <Button Classes="game-button" Background="#F44336" Margin="10,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🏠" Margin="0,0,5,0" />
+                    <TextBlock Text="Main Menu" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
     </Grid>
-
 </UserControl>

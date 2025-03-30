@@ -2,29 +2,54 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Checkers.ViewModels"
         Width="500" Height="700"
-        MinWidth="500" MinHeight="700"
-        Padding="10"
+        MinWidth="700" MinHeight="900"
+        Padding="20"
         x:Class="Checkers.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Checkers">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <StackPanel>
-        <TextBlock FontSize="40" FontWeight="Bold" TextAlignment="Center">
-            CHECKERS
-        </TextBlock>
+    <Window.Styles>
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="48" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#1A237E" />
+            <Setter Property="FontFamily" Value="Impact" />
+        </Style>
 
-        <TextBlock Margin="0,0,0,50" TextAlignment="Center">
-            by Marko Popadić
-        </TextBlock>
+        <Style Selector="TextBlock.subtitle">
+            <Setter Property="Margin" Value="0,0,0,50" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="FontStyle" Value="Italic" />
+            <Setter Property="Foreground" Value="#303F9F" />
+        </Style>
+    </Window.Styles>
 
-        <ContentControl Content="{Binding CurrentViewModel}" />
-    </StackPanel>
+    <Border CornerRadius="10" BoxShadow="0 4 8 0 #66000000">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0" Color="#E8EAF6" />
+                <GradientStop Offset="1" Color="#C5CAE9" />
+            </LinearGradientBrush>
+        </Border.Background>
 
+        <Grid RowDefinitions="Auto,*">
+            <StackPanel Grid.Row="0" Margin="0,20,0,0">
+                <TextBlock Classes="title">CHECKERS</TextBlock>
+                <TextBlock Classes="subtitle">by Marko Popadić</TextBlock>
+            </StackPanel>
 
+            <Border Grid.Row="1"
+                    CornerRadius="8"
+                    Margin="10"
+                    Background="#FFFFFF"
+                    BoxShadow="0 2 4 0 #33000000">
+                <ContentControl Content="{Binding CurrentViewModel}" Margin="10" />
+            </Border>
+        </Grid>
+    </Border>
 </Window>

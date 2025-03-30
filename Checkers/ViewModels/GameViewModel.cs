@@ -9,6 +9,11 @@ namespace Checkers.ViewModels;
 
 public class GameViewModel : ViewModelBase
 {
+    private readonly Board _board = new();
+    private readonly Engine.Engine _engine = new();
+    private readonly List<byte> _path = [];
+
+    private Move? _botMove;
     /*private readonly Board _board = new(new byte[,]
     {
         { 0, 0, 0, 3, 0, 3, 0, 0 },
@@ -21,10 +26,8 @@ public class GameViewModel : ViewModelBase
         { 1, 0, 0, 0, 0, 0, 0, 0 }
     }, true);*/
 
-    private readonly Board _board = new();
-    private readonly Engine.Engine _engine = new();
-    private readonly List<byte> _path = [];
-    private Move? _botMove;
+    private readonly int _botTimeLimitMs;
+
     private bool _isBotThinking;
     private List<Move> _moves = [];
 
@@ -49,12 +52,9 @@ public class GameViewModel : ViewModelBase
             }
         }
 
-        ExportCommand = new RelayCommand(ExportBoardState);
+        _botTimeLimitMs = 500;
 
-        _botMove = _engine.FindBestMoveWithTimeLimit(_board, 100);
-        Console.WriteLine(_botMove);
-        MoveBotPieceAlong(_botMove);
-        _isBotThinking = false;
+        ExportCommand = new RelayCommand(ExportBoardState);
     }
 
     public Square[] Squares { get; }
@@ -97,14 +97,7 @@ public class GameViewModel : ViewModelBase
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
-                await Task.Run(() =>
-                {
-                    _isBotThinking = true;
-                    _botMove = _engine.FindBestMoveWithTimeLimit(_board, 100);
-                    Console.WriteLine(_botMove);
-                });
-                MoveBotPieceAlong(_botMove);
-                _isBotThinking = false;
+                await BotPlayMove(_botTimeLimitMs);
             }
 
             return;
@@ -117,10 +110,15 @@ public class GameViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
+        await BotPlayMove(_botTimeLimitMs);
+    }
+
+    private async Task BotPlayMove(int timeLimitMs)
+    {
         await Task.Run(() =>
         {
             _isBotThinking = true;
-            _botMove = _engine.FindBestMoveWithTimeLimit(_board, 100);
+            _botMove = _engine.FindBestMoveWithTimeLimit(_board, timeLimitMs);
             Console.WriteLine(_botMove);
         });
         MoveBotPieceAlong(_botMove);
