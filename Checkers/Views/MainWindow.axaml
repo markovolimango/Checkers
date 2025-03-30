@@ -1,8 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Checkers.ViewModels"
-        Width="500" Height="700"
-        MinWidth="700" MinHeight="900"
+        Width="500" Height="800"
+        MinWidth="500" MinHeight="800"
         Padding="20"
         x:Class="Checkers.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -17,23 +17,22 @@
             <Setter Property="FontSize" Value="48" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="TextAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="#1A237E" />
+            <Setter Property="Foreground" Value="Black" />
             <Setter Property="FontFamily" Value="Impact" />
         </Style>
-
         <Style Selector="TextBlock.subtitle">
-            <Setter Property="Margin" Value="0,0,0,50" />
+            <Setter Property="Margin" Value="0,0,0,20" />
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="FontStyle" Value="Italic" />
-            <Setter Property="Foreground" Value="#303F9F" />
+            <Setter Property="Foreground" Value="Black" />
         </Style>
     </Window.Styles>
 
     <Border CornerRadius="10" BoxShadow="0 4 8 0 #66000000">
         <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Offset="0" Color="#E8EAF6" />
-                <GradientStop Offset="1" Color="#C5CAE9" />
+                <GradientStop Offset="0" Color="#9BC1BC" />
+                <GradientStop Offset="1" Color="#F4F1BB" />
             </LinearGradientBrush>
         </Border.Background>
 

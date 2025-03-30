@@ -1,35 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using Checkers.Models;
-using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Checkers.ViewModels;
 
-public class GameViewModel : ViewModelBase
+public partial class GameViewModel : ViewModelBase
 {
+    private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
     private readonly Board _board = new();
+    private readonly int _botTimeLimitMs;
     private readonly Engine.Engine _engine = new();
     private readonly List<byte> _path = [];
-
     private Move? _botMove;
-    /*private readonly Board _board = new(new byte[,]
-    {
-        { 0, 0, 0, 3, 0, 3, 0, 0 },
-        { 0, 0, 0, 0, 0, 0, 0, 0 },
-        { 0, 0, 0, 0, 0, 3, 0, 0 },
-        { 0, 0, 1, 0, 0, 0, 3, 0 },
-        { 0, 3, 0, 0, 0, 3, 0, 0 },
-        { 0, 0, 1, 0, 1, 0, 0, 0 },
-        { 0, 0, 0, 1, 0, 0, 0, 1 },
-        { 1, 0, 0, 0, 0, 0, 0, 0 }
-    }, true);*/
-
-    private readonly int _botTimeLimitMs;
-
     private bool _isBotThinking;
     private List<Move> _moves = [];
+    [ObservableProperty] private string _turnText;
 
     public GameViewModel(MainWindowViewModel mainWindowViewModel) : this()
     {
@@ -52,17 +39,25 @@ public class GameViewModel : ViewModelBase
             }
         }
 
+        TurnText = YourTurnText;
         _botTimeLimitMs = 500;
-
-        ExportCommand = new RelayCommand(ExportBoardState);
     }
 
     public Square[] Squares { get; }
-    public ICommand ExportCommand { get; }
+
+    private bool IsBotThinking
+    {
+        get => _isBotThinking;
+        set
+        {
+            _isBotThinking = value;
+            TurnText = _isBotThinking ? BotTurnText : YourTurnText;
+        }
+    }
 
     private async void OnSquareClick(Square square)
     {
-        if (_isBotThinking)
+        if (IsBotThinking)
             return;
 
         var piece = _board[square.Mask];
@@ -117,12 +112,14 @@ public class GameViewModel : ViewModelBase
     {
         await Task.Run(() =>
         {
-            _isBotThinking = true;
+            IsBotThinking = true;
             _botMove = _engine.FindBestMoveWithTimeLimit(_board, timeLimitMs);
             Console.WriteLine(_botMove);
         });
-        MoveBotPieceAlong(_botMove);
-        _isBotThinking = false;
+        await MoveBotPieceAlong(_botMove);
+        IsBotThinking = false;
+        if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+            MainWindowViewModel.LoadEndViewModel(false);
     }
 
     private int MovePlayerPieceTo(byte index)
@@ -144,6 +141,8 @@ public class GameViewModel : ViewModelBase
             if (moves[0].Captures != 0)
                 Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
+            if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+                MainWindowViewModel.LoadEndViewModel(true);
             return 1;
         }
 
@@ -153,7 +152,7 @@ public class GameViewModel : ViewModelBase
         return 0;
     }
 
-    private async void MoveBotPieceAlong(Move? move)
+    private async Task MoveBotPieceAlong(Move? move)
     {
         if (move is null)
             return;
@@ -174,8 +173,14 @@ public class GameViewModel : ViewModelBase
         Squares[move.Start].Deselect();
     }
 
-    private void ExportBoardState()
+    public void ExportBoardState()
     {
         Console.WriteLine($"{_board}");
+    }
+
+    public void LoadMainMenu()
+    {
+        if (MainWindowViewModel is null) return;
+        MainWindowViewModel.LoadMainMenuViewModel();
     }
 }

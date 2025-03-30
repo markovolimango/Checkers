@@ -8,7 +8,7 @@
              x:DataType="viewModels:MainMenuViewModel">
 
     <UserControl.Styles>
-        <Style Selector="Button.menu-button">
+        <Style Selector="Button">
             <Setter Property="FontSize" Value="22" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -16,19 +16,24 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Padding" Value="60,15" />
             <Setter Property="Margin" Value="0,10" />
-            <Setter Property="Background" Value="#3F51B5" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#5CA4A9" />
+            <Setter Property="Foreground" Value="Black" />
             <Setter Property="CornerRadius" Value="8" />
         </Style>
-        <Style Selector="Button.menu-button:pointerover">
-            <Setter Property="Background" Value="#303F9F" />
-            <Setter Property="Foreground" Value="White" />
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#ED6A5A" />
+        </Style>
+        <Style Selector="Button:pointerover">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="RenderTransform" Value="scale(1.05)" />
+            <Setter Property="Foreground" Value="Black" />
         </Style>
-        <Style Selector="Button.menu-button:pressed">
-            <Setter Property="Background" Value="#1A237E" />
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="#F4F1BB" />
             <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+        <Style Selector="Button:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#F4F1BB" />
         </Style>
     </UserControl.Styles>
 
@@ -36,25 +41,21 @@
         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Image Source="/Assets/Pieces/RedKing.png" Width="120" Height="120" Margin="0,0,0,30" />
 
-            <Button Classes="menu-button"
-                    Command="{Binding LoadGame}">
+            <Button Command="{Binding LoadGame}">
                 PLAY GAME
             </Button>
 
-            <!-- These buttons would need corresponding properties/commands in your ViewModel -->
-            <Button Classes="menu-button"
-                    Background="#4CAF50">
+            <Button>
                 TUTORIAL
             </Button>
 
-            <Button Classes="menu-button"
-                    Background="#FF9800">
+            <Button>
                 SETTINGS
             </Button>
 
             <TextBlock Text="v1.0.0"
                        HorizontalAlignment="Center"
-                       Foreground="#757575"
+                       Foreground="Black"
                        Margin="0,30,0,0" />
         </StackPanel>
     </Grid>

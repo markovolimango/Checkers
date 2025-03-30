@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Checkers.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="800"
              x:Class="Checkers.Views.GameView"
              x:DataType="viewModels:GameViewModel">
     <Design.DataContext>
@@ -11,38 +11,37 @@
     </Design.DataContext>
 
     <UserControl.Styles>
-        <Style Selector="Button.game-button">
-            <Setter Property="Background" Value="#3F51B5" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Padding" Value="15,8" />
+        <Style Selector="Border.game-section">
+            <Setter Property="Background" Value="#F4F1BB" />
             <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="10" />
         </Style>
-        <Style Selector="Button.game-button:pointerover">
-            <Setter Property="Background" Value="#303F9F" />
-            <Setter Property="Cursor" Value="Hand" />
+        <Style Selector="Button.board-square">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="Button.board-square:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+        <Style Selector="Button.board-square:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#40ED6A5A" />
+        </Style>
+        <Style Selector="Button.board-square:pressed">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+        <Style Selector="Button.board-square:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#ED6A5A" />
         </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="0,10">
-        <!-- Player turn indicator -->
-        <Border Grid.Row="0"
-                Background="#E8EAF6"
-                CornerRadius="4"
-                Padding="10"
-                Margin="0,0,0,10"
-                BorderBrush="#7986CB"
-                BorderThickness="1">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="CURRENT TURN: " VerticalAlignment="Center" />
-                <TextBlock Text="PLAYER 1" FontWeight="Bold" Foreground="#D32F2F" VerticalAlignment="Center" />
-                <!-- This would need to be bound to a property in your ViewModel -->
-            </StackPanel>
+        <Border Classes="game-section" Grid.Row="0">
+            <TextBlock Text="{Binding TurnText}" VerticalAlignment="Center" HorizontalAlignment="Center" />
         </Border>
 
-        <!-- Game board (unchanged as requested) -->
         <Viewbox Grid.Row="1" Stretch="Uniform">
             <Grid Width="400" Height="400">
                 <ItemsControl ItemsSource="{Binding Squares}">
@@ -54,23 +53,17 @@
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="viewModels:Square">
-                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                  Margin="0">
+                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
-                                <Image Source="{Binding BackgroundImage}"
-                                       Stretch="Fill"
-                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                <Image Source="{Binding BackgroundImage}" Margin="0"
+                                       Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-                                <Image Source="{Binding PieceImage}"
-                                       Stretch="Fill"
-                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                <Image Source="{Binding PieceImage}" Margin="0"
+                                       Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-                                <Button Background="Transparent"
+                                <Button Classes="board-square"
                                         Command="{Binding ClickCommand}"
-                                        Margin="0"
-                                        Padding="0"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch" />
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -78,14 +71,7 @@
             </Grid>
         </Viewbox>
 
-        <!-- Hint section -->
-        <Border Grid.Row="2"
-                Background="#FFF8E1"
-                CornerRadius="4"
-                Padding="15,10"
-                Margin="0,0,0,10"
-                BorderBrush="#FFCC80"
-                BorderThickness="1">
+        <Border Classes="game-section" Grid.Row="2">
             <StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock FontWeight="Bold">Need a Hint?</TextBlock>
@@ -103,21 +89,18 @@
             </StackPanel>
         </Border>
 
-        <!-- Action buttons -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button Classes="game-button" Command="{Binding ExportCommand}" Margin="0,0,10,0">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="📤" Margin="0,0,5,0" />
-                    <TextBlock Text="Export Board" />
-                </StackPanel>
-            </Button>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+            <Button Content="Export Board"
+                    Command="{Binding ExportBoardState}"
+                    Padding="20,10"
+                    CornerRadius="4"
+                    Margin="0,0,10,0" />
 
-            <Button Classes="game-button" Background="#F44336" Margin="10,0,0,0">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🏠" Margin="0,0,5,0" />
-                    <TextBlock Text="Main Menu" />
-                </StackPanel>
-            </Button>
+            <Button Content="Main Menu"
+                    Command="{Binding LoadMainMenu}"
+                    Padding="20,10"
+                    CornerRadius="4"
+                    Margin="10,0,0,0" />
         </StackPanel>
     </Grid>
 </UserControl>
