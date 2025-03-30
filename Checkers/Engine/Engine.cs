@@ -8,11 +8,12 @@ using Checkers.Models;
 
 namespace Checkers.Engine;
 
-public static class Engine
+public class Engine
 {
+    private const int MaxDepth = 20;
     private static readonly float[] RowMultipliers = [0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.4f];
 
-    public static (float Score, Move? BestMove) EvaluateWithTimeLimit(Board board, int maxDepth, int timeLimitMs)
+    public Move? FindBestMoveWithTimeLimit(Board board, int timeLimitMs)
     {
         var sw = new Stopwatch();
         sw.Start();
@@ -20,18 +21,16 @@ public static class Engine
         cts.CancelAfter(timeLimitMs);
 
         Move? bestMove = null;
-        float bestScore = 0;
 
         try
         {
-            for (var depth = 1; depth <= maxDepth; depth++)
+            for (var depth = 1; depth <= MaxDepth; depth++)
             {
-                var (score, move) = EvaluateWithDepth(board, depth, cts.Token);
-                bestScore = score;
+                var move = FindBestMoveWithDepth(board, depth, cts.Token);
                 bestMove = move;
 
                 Console.WriteLine(
-                    $"Depth {depth} completed. Score: {score}. Time elapsed: {sw.Elapsed.TotalMilliseconds}ms");
+                    $"Depth {depth} completed. Time elapsed: {sw.Elapsed.TotalMilliseconds}ms");
 
                 if (sw.ElapsedMilliseconds > timeLimitMs)
                     break;
@@ -44,20 +43,16 @@ public static class Engine
 
         sw.Stop();
         Console.WriteLine($"Total analysis time: {sw.Elapsed.TotalMilliseconds}ms");
-        return (bestScore, bestMove);
+        return bestMove;
     }
 
-    private static (float Score, Move? BestMove) EvaluateWithDepth(Board board, int depth,
+    private Move? FindBestMoveWithDepth(Board board, int depth,
         CancellationToken cancellationToken)
     {
         var allMoves = new List<Move>();
         allMoves.AddRange(board.KingsMoves);
         allMoves.AddRange(board.MenMoves);
-
-        if (allMoves.Count == 1)
-            return (Evaluate(board, depth, float.MinValue, float.MaxValue, cancellationToken), allMoves[0]);
-
-        var results = new ConcurrentBag<(float Score, Move Move)>();
+        var foundMoves = new ConcurrentBag<(float Score, Move Move)>();
 
         Parallel.ForEach(allMoves, new ParallelOptions
             { CancellationToken = cancellationToken, MaxDegreeOfParallelism = Environment.ProcessorCount }, move =>
@@ -66,41 +61,42 @@ public static class Engine
             newBoard.MakeMove(move);
             var score = Evaluate(newBoard, depth - 1, float.MinValue, float.MaxValue, cancellationToken);
 
-            results.Add((score, move));
+            foundMoves.Add((score, move));
         });
 
-        Move? bestMove = null;
+        Move? res = null;
         var bestScore = board.IsWhiteTurn ? 200f : -200f;
 
-        foreach (var (score, move) in results)
-            if (board.IsWhiteTurn)
-            {
+        if (board.IsWhiteTurn)
+        {
+            foreach (var (score, move) in foundMoves)
                 if (score < bestScore)
                 {
                     bestScore = score;
-                    bestMove = move;
+                    res = move;
                 }
-            }
-            else
-            {
+        }
+        else
+        {
+            foreach (var (score, move) in foundMoves)
                 if (score > bestScore)
                 {
                     bestScore = score;
-                    bestMove = move;
+                    res = move;
                 }
-            }
+        }
 
-        return (bestScore, bestMove);
+        return res;
     }
 
-    private static float Evaluate(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    private float Evaluate(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         return board.IsWhiteTurn
             ? Minimize(board, depth, alpha, beta, cancellationToken)
             : Maximize(board, depth, alpha, beta, cancellationToken);
     }
 
-    private static float Minimize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    private float Minimize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -129,7 +125,7 @@ public static class Engine
         return res;
     }
 
-    private static float Maximize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    private float Maximize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -159,7 +155,7 @@ public static class Engine
         return res;
     }
 
-    private static float EvaluateSimple(Board board)
+    private float EvaluateSimple(Board board)
     {
         if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
         {

@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Checkers.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
+             x:Class="Checkers.Views.GameView"
+             x:DataType="viewModels:GameViewModel">
+    <Design.DataContext>
+        <viewModels:GameViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="*, Auto, Auto">
+        <Viewbox Grid.Row="0" Stretch="Uniform">
+            <Grid Width="400" Height="400">
+                <ItemsControl ItemsSource="{Binding Squares}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="8" Columns="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="viewModels:Square">
+                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  Margin="0">
+
+                                <Image Source="{Binding BackgroundImage}"
+                                       Stretch="Fill"
+                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+                                <Image Source="{Binding PieceImage}"
+                                       Stretch="Fill"
+                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+                                <Button Background="Transparent"
+                                        Command="{Binding ClickCommand}"
+                                        Margin="0"
+                                        Padding="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Viewbox>
+
+        <TextBlock Grid.Row="1" Margin="10">
+            Need a Hint?
+        </TextBlock>
+
+        <Button Grid.Row="2" Command="{Binding ExportCommand}">Export Board State</Button>
+    </Grid>
+
+</UserControl>

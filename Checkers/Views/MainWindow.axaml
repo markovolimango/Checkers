@@ -1,8 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Checkers.ViewModels"
-        Width="500" Height="500"
-        MinWidth="300" MinHeight="300"
+        Width="500" Height="700"
+        MinWidth="500" MinHeight="700"
         Padding="10"
         x:Class="Checkers.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -14,47 +14,17 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto, *, Auto">
-        <Button Grid.Row="0" Command="{Binding ExportCommand}">Export Board State</Button>
-
-        <Viewbox Grid.Row="1" Stretch="Uniform">
-            <Grid Width="400" Height="400">
-                <ItemsControl ItemsSource="{Binding Squares}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="8" Columns="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="vm:Square">
-                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                  Margin="0">
-
-                                <Image Source="{Binding BackgroundImage}"
-                                       Stretch="Fill"
-                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-
-                                <Image Source="{Binding PieceImage}"
-                                       Stretch="Fill"
-                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-
-                                <Button Background="Transparent"
-                                        Command="{Binding ClickCommand}"
-                                        Margin="0"
-                                        Padding="0"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Grid>
-        </Viewbox>
-
-        <TextBlock Grid.Row="2" Margin="10">
-            Need a Hint?
+    <StackPanel>
+        <TextBlock FontSize="40" FontWeight="Bold" TextAlignment="Center">
+            ENGLISH DRAUGHTS
         </TextBlock>
-    </Grid>
+
+        <TextBlock Margin="0,0,0,50" TextAlignment="Center">
+            by Marko Popadić
+        </TextBlock>
+
+        <ContentControl Content="{Binding CurrentViewModel}" />
+    </StackPanel>
+
 
 </Window>
