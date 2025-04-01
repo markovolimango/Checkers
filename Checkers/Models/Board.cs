@@ -319,14 +319,51 @@ public class Board
         var res = "{ " + (byte)this[0] + ", ";
         for (byte i = 1; i < 63; i++)
         {
-            res += (byte)this[i];
+            switch (this[i])
+            {
+                case Piece.Empty:
+                    res += "empty";
+                    break;
+                case Piece.RedMan:
+                    res += "red man";
+                    break;
+                case Piece.RedKing:
+                    res += "red king";
+                    break;
+                case Piece.WhiteMan:
+                    res += "white man";
+                    break;
+                case Piece.WhiteKing:
+                    res += "white king";
+                    break;
+            }
+
             if (i % 8 == 7)
                 res += " },\n{ ";
             else
                 res += ", ";
         }
 
-        res += (byte)this[63] + " }";
+        switch (this[63])
+        {
+            case Piece.Empty:
+                res += "empty";
+                break;
+            case Piece.RedMan:
+                res += "red man";
+                break;
+            case Piece.RedKing:
+                res += "red king";
+                break;
+            case Piece.WhiteMan:
+                res += "white man";
+                break;
+            case Piece.WhiteKing:
+                res += "white king";
+                break;
+        }
+
+        res += " }";
         return res;
     }
 }

@@ -11,13 +11,15 @@ public partial class GameViewModel : ViewModelBase
     private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
 
     private readonly Board _board = new();
-    private readonly int _botTimeLimitMs;
     private readonly Engine.Engine _engine = new();
+    private readonly HintSystem _hintSystem;
     private readonly List<byte> _path = [];
+    private readonly SettingsData _settings;
     private Move? _botMove;
+    [ObservableProperty] private string _hintText;
     private bool _isBotThinking;
     private List<Move> _moves = [];
-    [ObservableProperty] private string _turnText;
+    [ObservableProperty] private string _turnText = "";
 
     public GameViewModel(MainWindowViewModel mainWindowViewModel)
     {
@@ -36,15 +38,21 @@ public partial class GameViewModel : ViewModelBase
         }
 
         MainWindowViewModel = mainWindowViewModel;
+        _settings = mainWindowViewModel.SettingsData;
 
-        _botTimeLimitMs = (int)MainWindowViewModel.SettingsData.BotThinkingTime * 1000;
+        _hintSystem = new HintSystem(_settings.HintModelName);
+        HintText = "Hint will be displated here";
+
         if (MainWindowViewModel.SettingsData.IsPlayerRed)
             IsBotThinking = false;
         else
-            BotPlayMove(_botTimeLimitMs);
+            BotPlayMove(BotTimeLimitMs).Wait();
     }
 
     public Square[] Squares { get; }
+
+    private int BotTimeLimitMs => (int)_settings.BotThinkingTime * 1000;
+    public bool AreHintsEnabled => _settings.HintsEnabled;
 
     private bool IsBotThinking
     {
@@ -93,7 +101,7 @@ public partial class GameViewModel : ViewModelBase
             {
                 Squares[_path[0]].Deselect();
                 _path.Clear();
-                await BotPlayMove(_botTimeLimitMs);
+                await BotPlayMove(BotTimeLimitMs);
             }
 
             return;
@@ -106,7 +114,7 @@ public partial class GameViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
-        await BotPlayMove(_botTimeLimitMs);
+        await BotPlayMove(BotTimeLimitMs);
     }
 
     private async Task BotPlayMove(int timeLimitMs)
@@ -173,6 +181,11 @@ public partial class GameViewModel : ViewModelBase
             Squares[index].RemovePiece();
 
         Squares[move.Start].Deselect();
+    }
+
+    public async void GetHint()
+    {
+        HintText = await _hintSystem.GetHint(_board);
     }
 
     public void ExportBoardState()
