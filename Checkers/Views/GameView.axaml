@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Checkers.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="800"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="700"
              x:Class="Checkers.Views.GameView"
              x:DataType="viewModels:GameViewModel">
 
@@ -28,60 +28,65 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="0,10">
-        <Border Classes="section" Grid.Row="0">
-            <TextBlock Text="{Binding TurnText}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-        </Border>
+    <Grid RowDefinitions="*,Auto">
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="{Binding HintsGridWidth}" />
+            </Grid.ColumnDefinitions>
+            <Grid RowDefinitions="Auto,*" Column="0" Margin="0">
+                <Border Classes="section" Grid.Row="0" Margin="0,10">
+                    <TextBlock Text="{Binding TurnText}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                </Border>
 
-        <Viewbox Grid.Row="1" Stretch="Uniform">
-            <Grid Width="400" Height="400">
-                <ItemsControl ItemsSource="{Binding Squares}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="8" Columns="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+                <Viewbox Grid.Row="1" Stretch="Uniform">
+                    <Grid Width="400" Height="400">
+                        <ItemsControl ItemsSource="{Binding Squares}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="8" Columns="8" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="viewModels:Square">
-                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="viewModels:Square">
+                                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
-                                <Image Source="{Binding BackgroundImage}" Margin="0"
-                                       Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                        <Image Source="{Binding BackgroundImage}" Margin="0"
+                                               Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-                                <Image Source="{Binding PieceImage}" Margin="0"
-                                       Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                        <Image Source="{Binding PieceImage}" Margin="0"
+                                               Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-                                <Button Classes="board-square"
-                                        Command="{Binding ClickCommand}"
-                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                                        <Button Classes="board-square"
+                                                Command="{Binding ClickCommand}"
+                                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Viewbox>
             </Grid>
-        </Viewbox>
 
-        <Border Classes="section" Grid.Row="2" IsVisible="{Binding AreHintsEnabled}">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold">Need a Hint?</TextBlock>
-                    <Button Command="{Binding GetHint}"
-                            Content="Show Hint"
-                            Margin="10,0,0,0"
-                            Background="#FF9800"
-                            Foreground="White"
-                            Padding="8,4"
-                            CornerRadius="4" />
-                </StackPanel>
-                <TextBlock Text="{Binding HintText}"
-                           FontStyle="Italic"
-                           Margin="0,5,0,0"
-                           Foreground="#757575" />
-            </StackPanel>
-        </Border>
+            <Border Classes="section" Grid.Column="1" Margin="10,10,10,0" IsVisible="{Binding AreHintsEnabled}">
+                <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+                    <TextBlock Grid.Row="0" FontWeight="Bold">LLM Chat</TextBlock>
+                    <TextBlock Grid.Row="1" Text="{Binding HintModelName}" />
+                    <ScrollViewer Grid.Row="2">
+                        <TextBlock Text="{Binding HintText}"
+                                   FontStyle="Italic"
+                                   Margin="0,5,0,0"
+                                   Foreground="#90000000"
+                                   TextWrapping="Wrap" />
+                    </ScrollViewer>
+                    <TextBox Grid.Row="3" Text="{Binding QuestionText}" />
+                    <Button Grid.Row="4" Content="Get Hint" Command="{Binding GetHint}" />
+                </Grid>
+            </Border>
+        </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0"
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0"
                     HorizontalAlignment="Center">
             <Button Content="Export Board"
                     Command="{Binding ExportBoardState}"

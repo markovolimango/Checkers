@@ -7,6 +7,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsViewModel _settingsViewModel;
     [ObservableProperty] private ViewModelBase _currentViewModel;
 
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(MinWidth))]
+    private SettingsData _settingsData;
+
     public MainWindowViewModel()
     {
         CurrentViewModel = new MainMenuViewModel(this);
@@ -14,7 +17,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SettingsData = new SettingsData();
     }
 
-    public SettingsData SettingsData { get; set; }
+    public int MinWidth => SettingsData.HintsEnabled ? 800 : 500;
 
     public void LoadGameViewModel()
     {

@@ -21,76 +21,78 @@
         </Style>
     </UserControl.Styles>
 
-    <ScrollViewer>
-        <StackPanel Margin="20">
-            <TextBlock Classes="heading">Game Settings</TextBlock>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Row="0" Classes="heading">Game Settings</TextBlock>
 
-            <Border Classes="section">
-                <StackPanel>
-                    <TextBlock Classes="section">Bot Thinking Time</TextBlock>
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="20">
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="section">Bot Thinking Time</TextBlock>
 
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,5">
-                        <TextBlock Grid.Column="0" VerticalAlignment="Center">
-                            Seconds:
-                        </TextBlock>
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,5">
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                                Seconds:
+                            </TextBlock>
 
-                        <NumericUpDown Grid.Column="1"
-                                       Value="{Binding Data.BotThinkingTime}"
-                                       Minimum="0.1"
-                                       Maximum="30"
-                                       Increment="0.1" />
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <Border Classes="section">
-                <StackPanel>
-                    <TextBlock Classes="section">Player Color</TextBlock>
-
-                    <StackPanel Margin="10,5">
-                        <RadioButton GroupName="PlayerColor"
-                                     Content="Red (Plays First)"
-                                     IsChecked="{Binding Data.IsPlayerRed}" />
-
-                        <RadioButton GroupName="PlayerColor"
-                                     Content="White"
-                                     IsChecked="{Binding !Data.IsPlayerRed}" />
+                            <NumericUpDown Grid.Column="1"
+                                           Value="{Binding Data.BotThinkingTime}"
+                                           Minimum="0.1"
+                                           Maximum="30"
+                                           Increment="0.1" />
+                        </Grid>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Classes="section">
-                <StackPanel>
-                    <TextBlock Classes="section">Sound Effects</TextBlock>
-                    <CheckBox Content="Enabled" IsChecked="{Binding Data.SoundEffectsEnabled}" />
-                </StackPanel>
-            </Border>
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="section">Player Color</TextBlock>
 
-            <Border Classes="section">
-                <StackPanel>
-                    <TextBlock Classes="section">Local LLM Hints</TextBlock>
-                    <CheckBox Content="Enabled"
-                              IsChecked="{Binding Data.HintsEnabled}" />
-                    <TextBox Text="{Binding Data.HintModelName}"
-                             IsVisible="{Binding Data.HintsEnabled}" />
-                </StackPanel>
-            </Border>
+                        <StackPanel Margin="10,5">
+                            <RadioButton GroupName="PlayerColor"
+                                         Content="Red (Plays First)"
+                                         IsChecked="{Binding Data.IsPlayerRed}" />
 
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
-                <Button Command="{Binding SaveSettings}"
-                        Padding="20,10"
-                        CornerRadius="4"
-                        Margin="0,0,10,0">
-                    Save Settings
-                </Button>
+                            <RadioButton GroupName="PlayerColor"
+                                         Content="White"
+                                         IsChecked="{Binding !Data.IsPlayerRed}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
-                <Button Command="{Binding Cancel}"
-                        Padding="20,10"
-                        CornerRadius="4"
-                        Margin="10,0,0,0">
-                    Cancel
-                </Button>
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="section">Sound Effects</TextBlock>
+                        <CheckBox Content="Enabled" IsChecked="{Binding Data.SoundEffectsEnabled}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="section">Local LLM Hints</TextBlock>
+                        <CheckBox Content="Enabled"
+                                  IsChecked="{Binding Data.HintsEnabled}" />
+                        <TextBox Text="{Binding Data.HintModelName}"
+                                 IsVisible="{Binding Data.HintsEnabled}" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+            <Button Command="{Binding SaveSettings}"
+                    Padding="20,10"
+                    CornerRadius="4"
+                    Margin="0,0,10,0">
+                Save Settings
+            </Button>
+
+            <Button Command="{Binding Cancel}"
+                    Padding="20,10"
+                    CornerRadius="4"
+                    Margin="10,0,0,0">
+                Cancel
+            </Button>
         </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </UserControl>

@@ -15,7 +15,6 @@ public class Board
 
     private readonly ulong[] _pieces = new ulong[5];
 
-
     public readonly List<Move> KingsMoves;
     public readonly List<Move> MenMoves;
     private bool _hasFoundCapture;
@@ -136,7 +135,7 @@ public class Board
                 res |= mask << 9;
         }
 
-        if (piece == Piece.WhiteMan || piece == Piece.WhiteKing)
+        if (piece is Piece.WhiteMan or Piece.WhiteKing)
             return res & ~WhitePieces;
         return res & ~RedPieces;
     }
@@ -316,54 +315,34 @@ public class Board
 
     public override string ToString()
     {
-        var res = "{ " + (byte)this[0] + ", ";
-        for (byte i = 1; i < 63; i++)
+        var res = "";
+        for (var row = 0; row < 8; row++)
         {
-            switch (this[i])
-            {
-                case Piece.Empty:
-                    res += "empty";
-                    break;
-                case Piece.RedMan:
-                    res += "red man";
-                    break;
-                case Piece.RedKing:
-                    res += "red king";
-                    break;
-                case Piece.WhiteMan:
-                    res += "white man";
-                    break;
-                case Piece.WhiteKing:
-                    res += "white king";
-                    break;
-            }
+            res += $"Row {row}: {ToChar(this[row, 0])}";
+            for (var col = 1; col < 8; col++) res += $", {ToChar(this[row, col])}";
 
-            if (i % 8 == 7)
-                res += " },\n{ ";
-            else
-                res += ", ";
+            res += "\n";
         }
 
-        switch (this[63])
+        return res;
+    }
+
+    private char ToChar(Piece piece)
+    {
+        switch (piece)
         {
             case Piece.Empty:
-                res += "empty";
-                break;
+                return '.';
             case Piece.RedMan:
-                res += "red man";
-                break;
+                return 'r';
             case Piece.RedKing:
-                res += "red king";
-                break;
+                return 'R';
             case Piece.WhiteMan:
-                res += "white man";
-                break;
+                return 'w';
             case Piece.WhiteKing:
-                res += "white king";
-                break;
+                return 'W';
         }
 
-        res += " }";
-        return res;
+        throw new ArgumentException();
     }
 }

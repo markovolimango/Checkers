@@ -15,8 +15,8 @@ public partial class SettingsData : ObservableObject
         BotThinkingTime = 1.0;
         IsPlayerRed = true;
         SoundEffectsEnabled = true;
-        HintsEnabled = false;
-        HintModelName = "deepseek-r1";
+        HintsEnabled = true;
+        HintModelName = "gemma3";
     }
 
     public SettingsData(SettingsData data)
