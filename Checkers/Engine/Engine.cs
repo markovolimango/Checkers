@@ -15,6 +15,7 @@ public class Engine
 
     public Move? FindBestMoveWithTimeLimit(Board board, int timeLimitMs)
     {
+        Console.WriteLine($"FindBestMoveWithTimeLimit: {timeLimitMs}");
         var sw = new Stopwatch();
         sw.Start();
         using var cts = new CancellationTokenSource();

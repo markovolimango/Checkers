@@ -43,6 +43,8 @@ public partial class GameViewModel : ViewModelBase
 
         MainWindowViewModel = mainWindowViewModel;
         _settings = mainWindowViewModel.SettingsData;
+        Console.WriteLine(MainWindowViewModel.SettingsData.BotThinkingTime);
+        Console.WriteLine(_settings.BotThinkingTime);
 
         _hintSystem = new HintSystem(_settings.HintModelName);
         HintText = "";
@@ -57,7 +59,7 @@ public partial class GameViewModel : ViewModelBase
 
     public string HintModelName => _settings.HintModelName;
     public GridLength HintsGridWidth => _settings.HintsEnabled ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
-    private int BotTimeLimitMs => (int)_settings.BotThinkingTime * 1000;
+    private int BotTimeLimitMs => (int)(_settings.BotThinkingTime * 1000);
     public bool AreHintsEnabled => _settings.HintsEnabled;
 
     private bool IsBotThinking
@@ -96,7 +98,7 @@ public partial class GameViewModel : ViewModelBase
             }
 
             _moves = _board.FindMovesStartingWith(_path);
-            res = MovePlayerPieceTo(square.Index);
+            res = await MovePlayerPieceTo(square.Index);
             if (res == -1)
             {
                 Squares[_path[0]].Deselect();
@@ -115,11 +117,12 @@ public partial class GameViewModel : ViewModelBase
 
         if (_board[square.Mask] != Piece.Empty)
             return;
-        res = MovePlayerPieceTo(square.Index);
+        res = await MovePlayerPieceTo(square.Index);
         if (res == -1 || res == 0)
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
+        Console.WriteLine(BotTimeLimitMs);
         await BotPlayMove(BotTimeLimitMs);
     }
 
@@ -128,16 +131,20 @@ public partial class GameViewModel : ViewModelBase
         await Task.Run(() =>
         {
             IsBotThinking = true;
+            Console.WriteLine($"BotPlayMove: {timeLimitMs}");
             _botMove = _engine.FindBestMoveWithTimeLimit(_board, timeLimitMs);
             Console.WriteLine(_botMove);
         });
         await MoveBotPieceAlong(_botMove);
         IsBotThinking = false;
         if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+        {
+            await Task.Delay(800);
             MainWindowViewModel.LoadEndViewModel(false);
+        }
     }
 
-    private int MovePlayerPieceTo(byte index)
+    private async Task<int> MovePlayerPieceTo(byte index)
     {
         var last = _path[^1];
         _path.Add(index);
@@ -157,7 +164,11 @@ public partial class GameViewModel : ViewModelBase
             _board.MakeMove(moves[0]);
             Squares[index].PutPiece(_board[moves[0].End]);
             if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+            {
+                await Task.Delay(800);
                 MainWindowViewModel.LoadEndViewModel(true);
+            }
+
             return 1;
         }
 
@@ -191,7 +202,9 @@ public partial class GameViewModel : ViewModelBase
 
     public async void GetHint()
     {
-        await _hintSystem.GetHint(_board, this, QuestionText);
+        var questionText = QuestionText;
+        QuestionText = "";
+        await _hintSystem.GetHint(_board, this, questionText);
     }
 
     public void ExportBoardState()

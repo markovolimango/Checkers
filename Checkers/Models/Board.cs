@@ -19,6 +19,9 @@ public class Board
     public readonly List<Move> MenMoves;
     private bool _hasFoundCapture;
 
+    /// <summary>
+    ///     Creates a board with the default starting state.
+    /// </summary>
     public Board()
     {
         _pieces[(byte)Piece.Empty] = 0xAA55AAFFFF55AA55;
@@ -32,6 +35,9 @@ public class Board
         FindAllLegalMoves();
     }
 
+    /// <summary>
+    ///     Creates a copy af another board.
+    /// </summary>
     public Board(Board other)
     {
         for (var i = 0; i < 5; i++)
@@ -41,6 +47,11 @@ public class Board
         KingsMoves = new List<Move>(other.KingsMoves);
     }
 
+    /// <summary>
+    ///     Creates a board from a predefined state (used for testing)
+    /// </summary>
+    /// <param name="pieces">Matrix representing the board state, each number corresponds to the piece enum's values</param>
+    /// <param name="isWhiteTurn">Bool describing whose turn it is</param>
     public Board(byte[,] pieces, bool isWhiteTurn)
     {
         for (var row = 0; row < 8; row++)
@@ -56,6 +67,9 @@ public class Board
     private ulong WhitePieces => _pieces[(byte)Piece.WhiteMan] | _pieces[(byte)Piece.WhiteKing];
     private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
 
+    /// <summary>
+    /// The fastest indexer, returns a piece from its bitmask directly, use this one when possible
+    /// </summary>
     public Piece this[ulong mask]
     {
         get
@@ -78,12 +92,18 @@ public class Board
         }
     }
 
+    /// <summary>
+    /// The index represents where the set bit should be in the bitmask.
+    /// </summary>
     public Piece this[byte index]
     {
         get => this[1UL << index];
         private set => this[1UL << index] = value;
     }
 
+    /// <summary>
+    /// Slowest indexer because of conversion. Indexing starts at the top left with (0, 0)
+    /// </summary>
     public Piece this[int row, int col]
     {
         get => this[ToMask(row, col)];
@@ -116,6 +136,10 @@ public class Board
         return (index / 8, index % 8);
     }
 
+    /// <summary>
+    /// Finds all squares that a piece looks at when trying to find a move.
+    /// </summary>
+    /// <returns>Bitmask, with each set bit being one square to look at</returns>
     private ulong FindTargetSquares(ulong mask, Piece piece)
     {
         ulong res = 0;
@@ -140,6 +164,11 @@ public class Board
         return res & ~RedPieces;
     }
 
+    /// <summary>
+    /// Finds all (could be none) possible jumps for a piece from a destination.
+    /// </summary>
+    /// <param name="targets">The targets found with FindTargetSquares, passed as a parameter to avoid redundant calls</param>
+    /// <returns>Pair of destinations (where the piece ends up) and captures (what the piece jumps over)</returns>
     private (ulong destinations, ulong captures) FindJumps(ulong mask, Piece piece, ulong targets)
     {
         ulong captures = 0, destinations = 0;
@@ -168,23 +197,39 @@ public class Board
         return (destinations, captures);
     }
 
+    /// <summary>
+    /// DFS like function that finds and adds every full capture move to the moves list.
+    /// </summary>
+    /// <param name="moves">The list to which the moves get added</param>
+    /// <param name="path">Where the piece has jumped so far</param>
+    /// <param name="captures">What the piece has captured so far</param>
+    /// <param name="mask">Starting location of the piece</param>
+    /// <param name="piece">The piece that's finding moves</param>
     private void AddCaptureMoves(List<Move> moves, List<byte> path, ulong captures, ulong mask, Piece piece)
     {
-        AddCaptureMoves(FindJumps(mask, piece, FindTargetSquares(mask, piece)), moves, path, captures, mask, piece);
+        AddCaptureMoves(FindJumps(mask, piece, FindTargetSquares(mask, piece)), moves, path, captures, piece);
     }
 
-    private void AddCaptureMoves((ulong, ulong) jumps, List<Move> moves, List<byte> path, ulong captures, ulong mask,
+    /// <summary>
+    /// DFS like function that finds and adds every full capture move to the moves list.
+    /// </summary>
+    /// <param name="jumps">Possible jumps found with the FindJumps function</param>
+    /// <param name="moves">The list to which the moves get added</param>
+    /// <param name="path">Where the piece has jumped so far</param>
+    /// <param name="captures">What the piece has captured so far</param>
+    /// <param name="piece">The piece that's finding moves</param>
+    private void AddCaptureMoves((ulong destinations, ulong captures) jumps, List<Move> moves, List<byte> path, ulong captures,
         Piece piece)
     {
         var hasFoundCapture = false;
         foreach (var jump in GetPieceMasks(jumps))
         {
-            if ((captures & jump.second) != 0)
+            if ((captures & jump.captures) != 0)
                 continue;
             hasFoundCapture = true;
-            path.Add(ToIndex(jump.first));
-            var myCaptures = captures | jump.second;
-            AddCaptureMoves(moves, path, myCaptures, jump.first, piece);
+            path.Add(ToIndex(jump.destinations));
+            var myCaptures = captures | jump.captures;
+            AddCaptureMoves(moves, path, myCaptures, jump.destinations, piece);
             path.RemoveAt(path.Count - 1);
         }
 
@@ -192,6 +237,9 @@ public class Board
             moves.Add(new Move(path, captures));
     }
 
+    /// <summary>
+    /// Finds every legal move in the position and adds them to the MenMoves and KingsMoves lists
+    /// </summary>
     private void FindAllLegalMoves()
     {
         _hasFoundCapture = false;
@@ -207,6 +255,9 @@ public class Board
         }
     }
 
+    /// <summary>
+    /// Finds all legal moves for a piece type
+    /// </summary>
     private void FindLegalMoves(ulong pieces, Piece piece, List<Move> moves)
     {
         moves.Clear();
@@ -230,13 +281,14 @@ public class Board
                     _hasFoundCapture = true;
                 }
 
-                AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, mask, piece);
+                AddCaptureMoves(jumps, moves, [ToIndex(mask)], 0, piece);
             }
         }
 
         moves.Sort((a, b) => b.CompareTo(a));
     }
 
+    
     public List<Move> FindMovesStartingWith(List<byte> path)
     {
         return FindMovesStartingWith(path, KingsMoves).Concat(FindMovesStartingWith(path, MenMoves)).ToList();
@@ -284,13 +336,13 @@ public class Board
         }
     }
 
-    public static IEnumerable<(ulong first, ulong second)> GetPieceMasks((ulong first, ulong second) pieces)
+    public static IEnumerable<(ulong destinations, ulong captures)> GetPieceMasks((ulong destinations, ulong captures) pieces)
     {
-        while (pieces.first != 0 && pieces.second != 0)
+        while (pieces.destinations != 0 && pieces.captures != 0)
         {
-            yield return (pieces.first & ~(pieces.first - 1), pieces.second & ~(pieces.second - 1));
-            pieces.first &= pieces.first - 1;
-            pieces.second &= pieces.second - 1;
+            yield return (pieces.destinations & ~(pieces.destinations - 1), pieces.captures & ~(pieces.captures - 1));
+            pieces.destinations &= pieces.destinations - 1;
+            pieces.captures &= pieces.captures - 1;
         }
     }
 
