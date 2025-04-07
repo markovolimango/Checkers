@@ -6,7 +6,8 @@
         Padding="20"
         x:Class="Checkers.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Checkers">
+        Title="Checkers"
+        Icon="/Assets/Pieces/RedKing.png">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
