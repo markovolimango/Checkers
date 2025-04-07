@@ -92,6 +92,7 @@ public class HintSystem
     private static string GeneratePrompt(Board.Board board)
     {
         var res =
+            "\nThe board state has changed. The moves you saw before are no longer legal. The board state and legal moves you will be sent now are the only ones you should consider when answering the player." +
             "\n\n**Board State:**" +
             "\n" + board +
             "\n" + (board.IsWhiteTurn ? "White" : "Red") + "'s turn" +
