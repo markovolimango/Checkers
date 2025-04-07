@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Checkers.Models;
 using Checkers.Models.Board;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -52,6 +51,14 @@ public partial class Square : ViewModelBase
     public ulong Mask { get; }
 
     public ICommand ClickCommand { get; }
+
+    public Piece GetPiece()
+    {
+        for (byte i = 0; i < 5; i++)
+            if (PieceImage == PieceImages[(Piece)i])
+                return (Piece)i;
+        return Piece.Empty;
+    }
 
     public void PutPiece(Piece piece)
     {

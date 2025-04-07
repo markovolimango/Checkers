@@ -21,7 +21,7 @@ public class Move : IEquatable<Move>, IComparable<Move>
     public Move(List<(int row, int col)> path)
     {
         Path = new List<byte>(path.Count) { Board.ToIndex(path[0].row, path[0].col) };
-        if (Path.Count == 2 && Math.Abs(path[0].row - path[1].row) == 1 && Math.Abs(path[0].col - path[1].col) == 1)
+        if (path.Count == 2 && Math.Abs(path[0].row - path[1].row) == 1 && Math.Abs(path[0].col - path[1].col) == 1)
             Path.Add(Board.ToIndex(path[1].row, path[1].col));
         else
             for (var i = 1; i < path.Count; i++)

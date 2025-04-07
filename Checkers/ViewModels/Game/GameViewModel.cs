@@ -50,7 +50,7 @@ public partial class GameViewModel : ViewModelBase
         if (MainWindowViewModel.SettingsData.IsPlayerRed)
             IsBotThinking = false;
         else
-            BotPlayMove(BotTimeLimitMs).Wait();
+            _ = BotPlayMove(BotTimeLimitMs);
     }
 
     public Square[] Squares { get; }

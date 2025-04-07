@@ -92,7 +92,6 @@ public class Engine
 
         if (board.IsDraw)
             bestScore = 0;
-        Console.WriteLine(bestScore);
         return (res, bestScore);
     }
 
@@ -240,7 +239,7 @@ public class Engine
     }
 
     /// <summary>
-    /// Rewards aggression if red has better pieces
+    ///     Rewards aggression if red has better pieces
     /// </summary>
     private static float CalculateRedDistanceBonus(Board.Board board, int[] numberOfPieces)
     {
@@ -263,7 +262,7 @@ public class Engine
     }
 
     /// <summary>
-    /// Rewards aggression if white has better pieces
+    ///     Rewards aggression if white has better pieces
     /// </summary>
     private static float CalculateWhiteDistanceBonus(Board.Board board, int[] numberOfPieces)
     {

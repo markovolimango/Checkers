@@ -1,6 +1,6 @@
 using Checkers.Models.Board;
 
-namespace Tests;
+namespace Tests.ModelTests;
 
 [TestFixture]
 public class BoardTests
@@ -84,6 +84,56 @@ public class BoardTests
             });
     }
 
+    private static IEnumerable<TestCaseData> MakeMove_CorrectlyModifiesBoard_TestData()
+    {
+        yield return new TestCaseData(
+            new Board(
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 1: w, ., w, ., w, ., w, .\n" +
+                "Row 2: ., ., ., w, ., w, ., w\n" +
+                "Row 3: ., ., w, ., ., ., ., .\n" +
+                "Row 4: ., ., ., ., ., r, ., .\n" +
+                "Row 5: r, ., r, ., ., ., r, .\n" +
+                "Row 6: ., r, ., r, ., r, ., r\n" +
+                "Row 7: r, ., r, ., r, ., r, .\n",
+                false),
+            new Board(
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 1: w, ., w, ., w, ., w, .\n" +
+                "Row 2: ., ., ., w, ., w, ., w\n" +
+                "Row 3: ., ., w, ., r, ., ., .\n" +
+                "Row 4: ., ., ., ., ., ., ., .\n" +
+                "Row 5: r, ., r, ., ., ., r, .\n" +
+                "Row 6: ., r, ., r, ., r, ., r\n" +
+                "Row 7: r, ., r, ., r, ., r, .\n",
+                false),
+            new Move([(4, 5), (3, 4)]));
+
+        yield return new TestCaseData(
+            new Board(
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 1: w, ., w, ., ., ., ., .\n" +
+                "Row 2: ., ., ., ., ., ., ., w\n" +
+                "Row 3: ., ., w, ., ., ., w, .\n" +
+                "Row 4: ., ., ., ., ., r, ., .\n" +
+                "Row 5: r, ., ., ., ., ., ., .\n" +
+                "Row 6: ., r, ., r, ., r, ., r\n" +
+                "Row 7: r, ., r, ., ., ., ., .\n",
+                false),
+            new Board(
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 1: w, ., w, ., ., ., ., .\n" +
+                "Row 2: ., ., ., ., ., ., ., w\n" +
+                "Row 3: ., ., w, ., ., ., ., .\n" +
+                "Row 4: ., ., ., ., ., ., ., .\n" +
+                "Row 5: r, ., ., ., ., ., ., .\n" +
+                "Row 6: ., r, ., r, ., ., ., r\n" +
+                "Row 7: r, ., r, ., ., ., W, .",
+                false),
+            new Move([(3, 6), (5, 4), (7, 6)]));
+    }
+
+    [Test]
     [TestCaseSource(nameof(FindAllLegalMoves_FindsCorrectMoves_TestData))]
     public void FindAllLegalMoves_FindsCorrectMoves(Board board, List<Move> kingsMoves, List<Move> menMoves)
     {
@@ -94,18 +144,39 @@ public class BoardTests
         });
     }
 
+    [Test]
     [TestCaseSource(nameof(IndexIndexer_GetsCorrectPiece_Invalid_TestData))]
     public void IndexIndexer_GetsCorrectPiece(Board board, byte index, Piece piece)
     {
         Assert.That(board[index], Is.EqualTo(piece));
     }
 
+    [Test]
+    [TestCaseSource(nameof(MakeMove_CorrectlyModifiesBoard_TestData))]
+    public void MakeMove_CorrectlyModifiesBoard(Board before, Board after, Move move)
+    {
+        Console.WriteLine($"{before}");
+        before.MakeMove(move);
+        Console.WriteLine($"{before}");
+        Assert.Multiple(() =>
+        {
+            for (byte index = 0; index < 64; index++)
+            {
+                if (before[index] != after[index])
+                    Console.WriteLine($"{before[index]} {after[index]} at {Board.ToPos(index)}");
+                Assert.That(before[index], Is.EqualTo(after[index]));
+            }
+        });
+    }
+
+    [Test]
     [TestCaseSource(nameof(MaskIndexer_GetsCorrectPiece_TestData))]
     public void MaskIndexer_GetsCorrectPiece(Board board, ulong mask, Piece piece)
     {
         Assert.That(board[mask], Is.EqualTo(piece));
     }
 
+    [Test]
     [TestCaseSource(nameof(PosIndexer_GetsCorrectPiece_Invalid_TestData))]
     public void PosIndexer_GetsCorrectPiece(Board board, int row, int col, Piece piece)
     {
