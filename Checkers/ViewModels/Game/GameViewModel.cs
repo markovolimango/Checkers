@@ -220,6 +220,9 @@ public partial class GameViewModel : ViewModelBase
         Squares[move.Start].Deselect();
     }
 
+    /// <summary>
+    ///     Used for testing
+    /// </summary>
     public void ExportBoardState()
     {
         Console.WriteLine($"{_board}");
