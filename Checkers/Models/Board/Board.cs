@@ -418,6 +418,16 @@ public class Board
         }
     }
 
+    public IEnumerable<(int row, int col)> GetPiecePositions(Piece piece)
+    {
+        var pieces = _pieces[(byte)piece];
+        while (pieces != 0)
+        {
+            yield return ToPos(pieces & ~(pieces - 1));
+            pieces &= pieces - 1;
+        }
+    }
+
     public override string ToString()
     {
         var res = "";

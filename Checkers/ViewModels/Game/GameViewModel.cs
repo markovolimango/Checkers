@@ -14,19 +14,8 @@ namespace Checkers.ViewModels.Game;
 public partial class GameViewModel : ViewModelBase
 {
     private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
-    
-    private readonly Board _board=new(
-        "Row 0: ., w, ., w, ., ., ., w\n" +
-        "Row 1: r, ., w, ., ., ., W, .\n" +
-        "Row 2: ., ., ., ., ., ., ., .\n" +
-        "Row 3: W, ., ., ., ., ., ., .\n" +
-        "Row 4: ., ., ., ., ., ., ., w\n" +
-        "Row 5: ., ., ., ., R, ., ., .\n" +
-        "Row 6: ., ., ., ., ., ., ., .\n" +
-        "Row 7: R, ., ., ., ., ., ., .\n"
-        ,false);
 
-    //private readonly Board _board = new();
+    private readonly Board _board = new();
     private readonly Engine _engine = new();
 
     private readonly List<byte> _path = [];
@@ -150,6 +139,12 @@ public partial class GameViewModel : ViewModelBase
             IsBotThinking = true;
             _botMove = _engine.FindBestMoveWithTimeLimit(_board, timeLimitMs);
         });
+        if (_botMove is null && MainWindowViewModel is not null)
+        {
+            await Task.Delay(800);
+            MainWindowViewModel.LoadEndViewModel(true);
+        }
+
         await MoveBotPieceAlong(_botMove);
         IsBotThinking = false;
         await CheckForWin(false);

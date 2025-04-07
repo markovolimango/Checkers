@@ -11,6 +11,7 @@ namespace Checkers.Models;
 public class Engine
 {
     private const int MaxDepth = 20;
+    private const float WinScore = 1000;
     private static readonly float[] RowMultipliers = [0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.4f];
 
     /// <summary>
@@ -29,8 +30,10 @@ public class Engine
         {
             for (var depth = 1; depth <= MaxDepth; depth++)
             {
-                var move = FindBestMoveWithDepth(board, depth, cts.Token);
-                bestMove = move;
+                var best = FindBestMoveAndScoreWithDepth(board, depth, cts.Token);
+                bestMove = best.move;
+                if (best.score >= WinScore || best.score <= -WinScore)
+                    break;
 
                 if (sw.ElapsedMilliseconds > timeLimitMs)
                     break;
@@ -45,9 +48,9 @@ public class Engine
     }
 
     /// <summary>
-    ///     Finds the best move with a set depth, used only internaly
+    ///     Finds the best move and score with a set depth, used only internally
     /// </summary>
-    private Move? FindBestMoveWithDepth(Board.Board board, int depth,
+    private (Move? move, float score) FindBestMoveAndScoreWithDepth(Board.Board board, int depth,
         CancellationToken cancellationToken)
     {
         var allMoves = new List<Move>();
@@ -66,7 +69,7 @@ public class Engine
         });
 
         Move? res = null;
-        var bestScore = board.IsWhiteTurn ? 1000 : -1000f;
+        var bestScore = board.IsWhiteTurn ? WinScore : -WinScore;
 
         if (board.IsWhiteTurn)
         {
@@ -87,8 +90,10 @@ public class Engine
                 }
         }
 
+        if (board.IsDraw)
+            bestScore = 0;
         Console.WriteLine(bestScore);
-        return res;
+        return (res, bestScore);
     }
 
     /// <summary>
@@ -116,7 +121,7 @@ public class Engine
 
         if (board.IsDraw)
             return 0f;
-        var res = 1000f;
+        var res = WinScore;
         foreach (var move in moves)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -151,7 +156,7 @@ public class Engine
 
         if (board.IsDraw)
             return 0f;
-        var res = -1000f;
+        var res = -WinScore;
         foreach (var move in moves)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -180,21 +185,103 @@ public class Engine
         if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
         {
             if (board.IsWhiteTurn)
-                return 1000f;
-            return -1000f;
+                return WinScore;
+            return -WinScore;
         }
 
         var res = 0f;
+        var numberOfPieces = new int[5];
 
         foreach (var index in board.GetPieceIndexes(Piece.RedMan))
+        {
             res += 1 * RowMultipliers[index / 8];
+            numberOfPieces[(byte)Piece.RedMan]++;
+        }
+
         foreach (var index in board.GetPieceIndexes(Piece.RedKing))
+        {
             res += 3;
+            numberOfPieces[(byte)Piece.RedKing]++;
+        }
+
         foreach (var index in board.GetPieceIndexes(Piece.WhiteMan))
+        {
             res -= 1 * RowMultipliers[7 - index / 8];
+            numberOfPieces[(byte)Piece.WhiteMan]++;
+        }
+
         foreach (var index in board.GetPieceIndexes(Piece.WhiteKing))
+        {
             res -= 3;
+            numberOfPieces[(byte)Piece.WhiteKing]++;
+        }
+
+        if (numberOfPieces[(byte)Piece.WhiteKing] + numberOfPieces[(byte)Piece.WhiteMan] <= 4 ||
+            numberOfPieces[(byte)Piece.RedKing] + numberOfPieces[(byte)Piece.RedMan] <= 4)
+        {
+            if (numberOfPieces[(byte)Piece.WhiteKing] > numberOfPieces[(byte)Piece.RedKing])
+            {
+                res -= CalculateWhiteDistanceBonus(board, numberOfPieces);
+            }
+            else if (numberOfPieces[(byte)Piece.WhiteKing] < numberOfPieces[(byte)Piece.RedKing])
+            {
+                res += CalculateRedDistanceBonus(board, numberOfPieces);
+            }
+            else
+            {
+                if (numberOfPieces[(byte)Piece.WhiteMan] > numberOfPieces[(byte)Piece.RedMan])
+                    res -= CalculateWhiteDistanceBonus(board, numberOfPieces);
+                if (numberOfPieces[(byte)Piece.WhiteMan] < numberOfPieces[(byte)Piece.RedMan])
+                    res += CalculateRedDistanceBonus(board, numberOfPieces);
+            }
+        }
 
         return res;
+    }
+
+    /// <summary>
+    /// Rewards aggression if red has better pieces
+    /// </summary>
+    private static float CalculateRedDistanceBonus(Board.Board board, int[] numberOfPieces)
+    {
+        var totalAvgDistance = 0f;
+        foreach (var from in board.GetPiecePositions(Piece.WhiteKing))
+        {
+            var avgDistance = 0f;
+            foreach (var to in board.GetPiecePositions(Piece.RedKing))
+                avgDistance += Math.Abs(from.row - to.row) + Math.Abs(from.col - to.col);
+            foreach (var to in board.GetPiecePositions(Piece.RedMan))
+                avgDistance += Math.Abs(from.row - to.row) + Math.Abs(from.col - to.col);
+            avgDistance /= numberOfPieces[(byte)Piece.WhiteKing] + numberOfPieces[(byte)Piece.WhiteMan];
+            totalAvgDistance += avgDistance;
+        }
+
+        totalAvgDistance /= numberOfPieces[(byte)Piece.RedKing];
+        if (totalAvgDistance >= 4)
+            return (8 - totalAvgDistance) / 2;
+        return 0f;
+    }
+
+    /// <summary>
+    /// Rewards aggression if white has better pieces
+    /// </summary>
+    private static float CalculateWhiteDistanceBonus(Board.Board board, int[] numberOfPieces)
+    {
+        var totalAvgDistance = 0f;
+        foreach (var from in board.GetPiecePositions(Piece.RedKing))
+        {
+            var avgDistance = 0f;
+            foreach (var to in board.GetPiecePositions(Piece.WhiteKing))
+                avgDistance += Math.Abs(from.row - to.row) + Math.Abs(from.col - to.col);
+            foreach (var to in board.GetPiecePositions(Piece.WhiteMan))
+                avgDistance += Math.Abs(from.row - to.row) + Math.Abs(from.col - to.col);
+            avgDistance /= numberOfPieces[(byte)Piece.RedKing] + numberOfPieces[(byte)Piece.RedMan];
+            totalAvgDistance += avgDistance;
+        }
+
+        totalAvgDistance /= numberOfPieces[(byte)Piece.WhiteKing];
+        if (totalAvgDistance >= 4)
+            return (8 - totalAvgDistance) / 2;
+        return 0f;
     }
 }

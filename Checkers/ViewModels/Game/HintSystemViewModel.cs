@@ -20,6 +20,8 @@ public partial class HintSystemViewModel : ObservableObject
 
     public async Task GetHint(Board board)
     {
+        Response += $"\n{Question}\n";
+        Question = "";
         await _hintSystem.GetHint(board, Question, UpdateText);
     }
 
