@@ -9,6 +9,18 @@ public class ViewModelBase : ObservableObject
     public void LoadMainMenu()
     {
         if (MainWindowViewModel is null) return;
-        MainWindowViewModel.LoadMainMenu();
+        MainWindowViewModel.LoadMainMenuViewModel();
+    }
+
+    public void LoadGame()
+    {
+        if (MainWindowViewModel is null) return;
+        MainWindowViewModel.LoadGameViewModel();
+    }
+
+    public void LoadSettings()
+    {
+        if (MainWindowViewModel is null) return;
+        MainWindowViewModel.LoadSettingsViewModel();
     }
 }

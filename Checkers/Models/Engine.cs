@@ -66,7 +66,7 @@ public class Engine
         });
 
         Move? res = null;
-        var bestScore = board.IsWhiteTurn ? 200f : -200f;
+        var bestScore = board.IsWhiteTurn ? 1000 : -1000f;
 
         if (board.IsWhiteTurn)
         {
@@ -87,6 +87,7 @@ public class Engine
                 }
         }
 
+        Console.WriteLine(bestScore);
         return res;
     }
 
@@ -113,7 +114,9 @@ public class Engine
         moves.AddRange(board.KingsMoves);
         moves.AddRange(board.MenMoves);
 
-        var res = 200f;
+        if (board.IsDraw)
+            return 0f;
+        var res = 1000f;
         foreach (var move in moves)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -146,7 +149,9 @@ public class Engine
         moves.AddRange(board.KingsMoves);
         moves.AddRange(board.MenMoves);
 
-        var res = -200f;
+        if (board.IsDraw)
+            return 0f;
+        var res = -1000f;
         foreach (var move in moves)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -170,22 +175,26 @@ public class Engine
     /// </summary>
     private static float EvaluateSimple(Board.Board board)
     {
+        if (board.IsDraw)
+            return 0f;
         if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
         {
             if (board.IsWhiteTurn)
-                return 1000;
-            return -1000;
+                return 1000f;
+            return -1000f;
         }
 
         var res = 0f;
+
         foreach (var index in board.GetPieceIndexes(Piece.RedMan))
             res += 1 * RowMultipliers[index / 8];
-        foreach (var unused in board.GetPieceIndexes(Piece.RedKing))
-            res += 2;
+        foreach (var index in board.GetPieceIndexes(Piece.RedKing))
+            res += 3;
         foreach (var index in board.GetPieceIndexes(Piece.WhiteMan))
             res -= 1 * RowMultipliers[7 - index / 8];
-        foreach (var unused in board.GetPieceIndexes(Piece.WhiteKing))
-            res -= 2;
+        foreach (var index in board.GetPieceIndexes(Piece.WhiteKing))
+            res -= 3;
+
         return res;
     }
 }

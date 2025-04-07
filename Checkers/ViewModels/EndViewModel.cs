@@ -24,16 +24,4 @@ public partial class EndViewModel : ViewModelBase
             TextColor = "Red";
         }
     }
-
-    public void LoadMainMenu()
-    {
-        if (MainWindowViewModel is null) return;
-        MainWindowViewModel.LoadMainMenuViewModel();
-    }
-
-    public void LoadGame()
-    {
-        if (MainWindowViewModel is null) return;
-        MainWindowViewModel.LoadGameViewModel();
-    }
 }

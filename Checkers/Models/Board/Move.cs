@@ -21,11 +21,14 @@ public class Move : IEquatable<Move>, IComparable<Move>
     public Move(List<(int row, int col)> path)
     {
         Path = new List<byte>(path.Count) { Board.ToIndex(path[0].row, path[0].col) };
-        for (var i = 1; i < path.Count; i++)
-        {
-            Path.Add(Board.ToIndex(path[i].row, path[i].col));
-            Captures |= Board.ToMask((path[i].row + path[i - 1].row) / 2, (path[i].col + path[i - 1].col) / 2);
-        }
+        if (Path.Count == 2 && Math.Abs(path[0].row - path[1].row) == 1 && Math.Abs(path[0].col - path[1].col) == 1)
+            Path.Add(Board.ToIndex(path[1].row, path[1].col));
+        else
+            for (var i = 1; i < path.Count; i++)
+            {
+                Path.Add(Board.ToIndex(path[i].row, path[i].col));
+                Captures |= Board.ToMask((path[i].row + path[i - 1].row) / 2, (path[i].col + path[i - 1].col) / 2);
+            }
     }
 
     public List<byte> Path { get; }
@@ -33,12 +36,18 @@ public class Move : IEquatable<Move>, IComparable<Move>
     public byte Start => Path[0];
     public byte End => Path[^1];
 
+    #region IComparable<Move> Members
+
     public int CompareTo(Move? other)
     {
         if (other is null)
             return 1;
         return Path.Count.CompareTo(other.Path.Count);
     }
+
+    #endregion
+
+    #region IEquatable<Move> Members
 
     public bool Equals(Move? other)
     {
@@ -51,6 +60,8 @@ public class Move : IEquatable<Move>, IComparable<Move>
 
         return true;
     }
+
+    #endregion
 
     public override string ToString()
     {

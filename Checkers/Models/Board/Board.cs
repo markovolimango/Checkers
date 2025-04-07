@@ -15,6 +15,8 @@ public class Board
 
     private readonly ulong[] _pieces = new ulong[5];
 
+    private readonly PositionTracker _positionTracker;
+
     public readonly List<Move> KingsMoves;
     public readonly List<Move> MenMoves;
     private bool _hasFoundCapture;
@@ -30,6 +32,8 @@ public class Board
         _pieces[(byte)Piece.WhiteKing] = 0x0000000000000000;
         _pieces[(byte)Piece.RedKing] = 0x0000000000000000;
         IsWhiteTurn = false;
+        _positionTracker = new PositionTracker();
+        _positionTracker.Add(GetHashString());
         MenMoves = new List<Move>(10);
         KingsMoves = new List<Move>(10);
         FindAllLegalMoves();
@@ -43,26 +47,35 @@ public class Board
         for (var i = 0; i < 5; i++)
             _pieces[i] = other._pieces[i];
         IsWhiteTurn = other.IsWhiteTurn;
+        _positionTracker = new PositionTracker(other._positionTracker);
         MenMoves = new List<Move>(other.MenMoves);
         KingsMoves = new List<Move>(other.KingsMoves);
     }
 
-    /// <summary>
-    ///     Creates a board from a predefined state (used for testing)
-    /// </summary>
-    /// <param name="pieces">Matrix representing the board state, each number corresponds to the piece enum's values</param>
-    /// <param name="isWhiteTurn">Bool describing whose turn it is</param>
-    public Board(byte[,] pieces, bool isWhiteTurn)
+    public Board(string s, bool isWhiteTurn)
     {
         for (var row = 0; row < 8; row++)
-        for (var col = 0; col < 8; col++)
-            this[row, col] = (Piece)pieces[row, col];
+        {
+            var col = 0;
+            var i = 7 + row * 30;
+            while (i < (row + 1) * 30)
+            {
+                Console.WriteLine($"{i}");
+                Console.WriteLine($"({row}, {col}) -> {CharToPiece(s[i])}");
+                this[row, col++] = CharToPiece(s[i]);
+                i += 3;
+            }
+        }
+
         IsWhiteTurn = isWhiteTurn;
+        _positionTracker = new PositionTracker();
+        _positionTracker.Add(GetHashString());
         MenMoves = new List<Move>(10);
         KingsMoves = new List<Move>(10);
         FindAllLegalMoves();
     }
 
+    public bool IsDraw { get; private set; }
     public bool IsWhiteTurn { get; private set; }
     private ulong WhitePieces => _pieces[(byte)Piece.WhiteMan] | _pieces[(byte)Piece.WhiteKing];
     private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
@@ -336,7 +349,18 @@ public class Board
         this[move.End] = piece;
         this[move.Captures] = Piece.Empty;
         IsWhiteTurn = !IsWhiteTurn;
-        FindAllLegalMoves();
+        var hashString = GetHashString();
+        _positionTracker.Add(hashString);
+        if (_positionTracker.Get(hashString) >= 3)
+        {
+            IsDraw = true;
+            KingsMoves.Clear();
+            MenMoves.Clear();
+        }
+        else
+        {
+            FindAllLegalMoves();
+        }
     }
 
     /// <summary>
@@ -411,7 +435,7 @@ public class Board
     /// <summary>
     ///     Represents a piece as a char, used in the LLM prompt
     /// </summary>
-    private char PieceToChar(Piece piece)
+    private static char PieceToChar(Piece piece)
     {
         switch (piece)
         {
@@ -425,8 +449,36 @@ public class Board
                 return 'w';
             case Piece.WhiteKing:
                 return 'W';
+            default:
+                return '.';
         }
+    }
 
-        throw new ArgumentException();
+    private static Piece CharToPiece(char c)
+    {
+        switch (c)
+        {
+            case '.':
+                return Piece.Empty;
+            case 'r':
+                return Piece.RedMan;
+            case 'R':
+                return Piece.RedKing;
+            case 'w':
+                return Piece.WhiteMan;
+            case 'W':
+                return Piece.WhiteKing;
+            default:
+                return Piece.Empty;
+        }
+    }
+
+    public string GetHashString()
+    {
+        var res = "";
+        for (var i = 1; i < 5; i++)
+            res += _pieces[i].ToString();
+        res += IsWhiteTurn ? 'w' : 'r';
+        return res;
     }
 }

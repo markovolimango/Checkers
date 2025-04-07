@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Avalonia.Controls;
 using Checkers.Models;
 using Checkers.Models.Board;
+using Checkers.ViewModels.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,8 +14,19 @@ namespace Checkers.ViewModels.Game;
 public partial class GameViewModel : ViewModelBase
 {
     private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
+    
+    private readonly Board _board=new(
+        "Row 0: ., w, ., w, ., ., ., w\n" +
+        "Row 1: r, ., w, ., ., ., W, .\n" +
+        "Row 2: ., ., ., ., ., ., ., .\n" +
+        "Row 3: W, ., ., ., ., ., ., .\n" +
+        "Row 4: ., ., ., ., ., ., ., w\n" +
+        "Row 5: ., ., ., ., R, ., ., .\n" +
+        "Row 6: ., ., ., ., ., ., ., .\n" +
+        "Row 7: R, ., ., ., ., ., ., .\n"
+        ,false);
 
-    private readonly Board _board = new();
+    //private readonly Board _board = new();
     private readonly Engine _engine = new();
 
     private readonly List<byte> _path = [];
@@ -53,7 +65,7 @@ public partial class GameViewModel : ViewModelBase
     }
 
     public Square[] Squares { get; }
-    public Settings.SettingsData SettingsData { get; }
+    public SettingsData SettingsData { get; }
     public HintSystemViewModel HintSystemViewModel { get; }
     public ICommand GetHintCommand { get; }
 
@@ -140,7 +152,7 @@ public partial class GameViewModel : ViewModelBase
         });
         await MoveBotPieceAlong(_botMove);
         IsBotThinking = false;
-        await CheckForWin();
+        await CheckForWin(false);
     }
 
     /// <summary>
@@ -165,7 +177,7 @@ public partial class GameViewModel : ViewModelBase
                 Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
             Squares[index].PutPiece(_board[moves[0].End]);
-            await CheckForWin();
+            await CheckForWin(true);
 
             return 1;
         }
@@ -179,12 +191,12 @@ public partial class GameViewModel : ViewModelBase
     /// <summary>
     ///     Loads the end screen if someone has won
     /// </summary>
-    private async Task CheckForWin()
+    private async Task CheckForWin(bool isPlayerTurn)
     {
         if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
         {
             await Task.Delay(800);
-            MainWindowViewModel.LoadEndViewModel(true);
+            MainWindowViewModel.LoadEndViewModel(isPlayerTurn);
         }
     }
 

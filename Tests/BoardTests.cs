@@ -34,17 +34,16 @@ public class BoardTests
 
     private static IEnumerable<TestCaseData> FindAllLegalMoves_FindsCorrectMoves_TestData()
     {
-        yield return new TestCaseData(new Board(new byte[,]
-            {
-                { 0, 0, 0, 0, 0, 3, 0, 3 },
-                { 3, 0, 0, 0, 3, 0, 3, 0 },
-                { 0, 3, 0, 3, 0, 3, 0, 3 },
-                { 3, 0, 0, 0, 3, 0, 0, 0 },
-                { 0, 1, 0, 1, 0, 0, 0, 0 },
-                { 1, 0, 0, 0, 1, 0, 1, 0 },
-                { 0, 1, 0, 1, 0, 1, 0, 1 },
-                { 0, 0, 1, 0, 0, 0, 1, 0 }
-            }, true),
+        yield return new TestCaseData(new Board(
+                "Row 0: ., ., ., ., ., w, ., w\n" +
+                "Row 0: w, ., ., ., w, ., w, .\n" +
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 0: w, ., ., ., w, ., ., .\n" +
+                "Row 0: ., r, ., r, ., ., ., .\n" +
+                "Row 0: r, ., ., ., r, ., r, .\n" +
+                "Row 0: ., r, ., r, ., r, ., r\n" +
+                "Row 0: ., ., r, ., ., ., r, .\n",
+                true),
             new List<Move>(),
             new List<Move>
             {
@@ -52,6 +51,36 @@ public class BoardTests
                 new([(3, 0), (5, 2), (7, 4)]),
                 new([(3, 4), (5, 2), (7, 0)]),
                 new([(3, 4), (5, 2), (7, 4)])
+            });
+
+        yield return new TestCaseData(new Board(
+                "Row 0: ., w, ., w, ., w, ., w\n" +
+                "Row 1: w, ., w, ., w, ., w, .\n" +
+                "Row 2: ., ., ., w, ., w, ., w\n" +
+                "Row 3: ., ., ., ., ., ., ., .\n" +
+                "Row 4: ., ., ., ., ., r, ., .\n" +
+                "Row 5: r, ., ., ., w, ., r, .\n" +
+                "Row 6: ., r, ., r, ., r, ., r\n" +
+                "Row 7: r, ., r, ., r, ., r, .\n",
+                false),
+            new List<Move>(),
+            new List<Move> { new([(6, 5), (4, 3)]) });
+
+        yield return new TestCaseData(new Board(
+                "Row 0: ., w, ., w, ., ., ., w\n" +
+                "Row 1: r, ., w, ., ., ., w, .\n" +
+                "Row 2: ., ., ., ., ., ., ., .\n" +
+                "Row 3: W, ., ., ., ., ., w, .\n" +
+                "Row 4: ., ., ., ., ., ., ., w\n" +
+                "Row 5: ., ., ., ., ., ., ., .\n" +
+                "Row 6: ., ., ., ., ., ., ., w\n" +
+                "Row 7: r, ., ., ., ., ., r, .\n",
+                false),
+            new List<Move>(),
+            new List<Move>
+            {
+                new([(7, 0), (6, 1)]),
+                new([(7, 6), (6, 5)])
             });
     }
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace Checkers.ViewModels.Settings;
 
 public class SettingsViewModel : ViewModelBase
@@ -15,16 +13,14 @@ public class SettingsViewModel : ViewModelBase
     public void SaveSettings()
     {
         if (MainWindowViewModel is null) return;
-        Console.WriteLine((double)Data.BotThinkingTime);
         MainWindowViewModel.SettingsData = new SettingsData(Data);
-        Console.WriteLine((double)MainWindowViewModel.SettingsData.BotThinkingTime);
-        MainWindowViewModel.LoadMainMenuViewModel();
+        LoadMainMenu();
     }
 
     public void Cancel()
     {
         Data = new SettingsData();
         if (MainWindowViewModel is null) return;
-        MainWindowViewModel.LoadMainMenuViewModel();
+        LoadMainMenu();
     }
 }
