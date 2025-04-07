@@ -10,6 +10,8 @@
 - Full GUI: See the board clearly and configure settings.
 - LLM Hints: Connect to a local LLM you have installed with Ollama and ask it for hints.
 
+![Example Image](Checkers/Assets/Example.png)
+
 ## How to Run
 
 1. Make sure you have .NET 8.0.0 or later installed.
