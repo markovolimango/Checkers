@@ -2,7 +2,7 @@
 
 [![build and test](https://github.com/markovolimango/Checkers/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/markovolimango/Checkers/actions/workflows/build-and-test.yml)
 
-*Project built as a task for JetBrains Internship Projects 2025 3.0*
+*Project created for a task for JetBrains Internship Projects 2025 3.0*
 
 ## Features
 
