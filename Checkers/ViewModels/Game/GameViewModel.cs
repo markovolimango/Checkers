@@ -142,7 +142,7 @@ public partial class GameViewModel : ViewModelBase
         if (_botMove is null && MainWindowViewModel is not null)
         {
             await Task.Delay(800);
-            MainWindowViewModel.LoadEndViewModel(true);
+            MainWindowViewModel.LoadEndViewModel(1);
         }
 
         await MoveBotPieceAlong(_botMove);
@@ -188,10 +188,18 @@ public partial class GameViewModel : ViewModelBase
     /// </summary>
     private async Task CheckForWin(bool isPlayerTurn)
     {
-        if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+        if (MainWindowViewModel is null)
+            return;
+        if (_board.IsDraw)
         {
             await Task.Delay(800);
-            MainWindowViewModel.LoadEndViewModel(isPlayerTurn);
+            MainWindowViewModel.LoadEndViewModel(0);
+        }
+
+        if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0)
+        {
+            await Task.Delay(800);
+            MainWindowViewModel.LoadEndViewModel(isPlayerTurn ? 1 : -1);
         }
     }
 

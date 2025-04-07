@@ -1,4 +1,5 @@
-﻿using Checkers.ViewModels.Settings;
+﻿using Checkers.ViewModels.Game;
+using Checkers.ViewModels.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Checkers.ViewModels;
@@ -9,23 +10,23 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase _currentViewModel;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(MinWidth))]
-    private Settings.SettingsData _settingsData;
+    private SettingsData _settingsData;
 
     public MainWindowViewModel()
     {
         CurrentViewModel = new MainMenuViewModel(this);
         _settingsViewModel = new SettingsViewModel(this);
-        SettingsData = new Settings.SettingsData();
+        SettingsData = new SettingsData();
     }
 
     public int MinWidth => SettingsData.HintsEnabled ? 800 : 500;
 
     public void LoadGameViewModel()
     {
-        CurrentViewModel = new Game.GameViewModel(this);
+        CurrentViewModel = new GameViewModel(this);
     }
 
-    public void LoadEndViewModel(bool isWin)
+    public void LoadEndViewModel(int isWin)
     {
         CurrentViewModel = new EndViewModel(this, isWin);
     }
