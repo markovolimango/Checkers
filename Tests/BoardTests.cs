@@ -1,4 +1,5 @@
 using Checkers.Models;
+using Checkers.Models.Board;
 
 namespace Tests;
 

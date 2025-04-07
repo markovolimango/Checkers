@@ -4,10 +4,11 @@ using System.Windows.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Checkers.Models;
+using Checkers.Models.Board;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace Checkers.ViewModels;
+namespace Checkers.ViewModels.Game;
 
 public partial class Square : ViewModelBase
 {
@@ -29,7 +30,6 @@ public partial class Square : ViewModelBase
         SelectedSquareImage = new(AssetLoader.Open(new Uri(BoardAssetsPath + "SelectedSquare.png")));
 
     private readonly Bitmap _squareImage;
-
     [ObservableProperty] private Bitmap _backgroundImage;
     [ObservableProperty] private Bitmap? _pieceImage;
 

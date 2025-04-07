@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace Checkers.Models;
+namespace Checkers.Models.Board;
 
 public class Board
 {
@@ -68,7 +68,7 @@ public class Board
     private ulong RedPieces => _pieces[(byte)Piece.RedMan] | _pieces[(byte)Piece.RedKing];
 
     /// <summary>
-    /// The fastest indexer, returns a piece from its bitmask directly, use this one when possible
+    ///     The fastest indexer, returns a piece from its bitmask directly, use this one when possible
     /// </summary>
     public Piece this[ulong mask]
     {
@@ -93,7 +93,7 @@ public class Board
     }
 
     /// <summary>
-    /// The index represents where the set bit should be in the bitmask.
+    ///     The index represents where the set bit should be in the bitmask.
     /// </summary>
     public Piece this[byte index]
     {
@@ -102,7 +102,7 @@ public class Board
     }
 
     /// <summary>
-    /// Slowest indexer because of conversion. Indexing starts at the top left with (0, 0)
+    ///     Slowest indexer because of conversion. Indexing starts at the top left with (0, 0)
     /// </summary>
     public Piece this[int row, int col]
     {
@@ -137,7 +137,7 @@ public class Board
     }
 
     /// <summary>
-    /// Finds all squares that a piece looks at when trying to find a move.
+    ///     Finds all squares that a piece looks at when trying to find a move.
     /// </summary>
     /// <returns>Bitmask, with each set bit being one square to look at</returns>
     private ulong FindTargetSquares(ulong mask, Piece piece)
@@ -165,7 +165,7 @@ public class Board
     }
 
     /// <summary>
-    /// Finds all (could be none) possible jumps for a piece from a destination.
+    ///     Finds all (could be none) possible jumps for a piece from a destination.
     /// </summary>
     /// <param name="targets">The targets found with FindTargetSquares, passed as a parameter to avoid redundant calls</param>
     /// <returns>Pair of destinations (where the piece ends up) and captures (what the piece jumps over)</returns>
@@ -198,7 +198,7 @@ public class Board
     }
 
     /// <summary>
-    /// DFS like function that finds and adds every full capture move to the moves list.
+    ///     DFS like function that finds and adds every full capture move to the moves list.
     /// </summary>
     /// <param name="moves">The list to which the moves get added</param>
     /// <param name="path">Where the piece has jumped so far</param>
@@ -211,14 +211,18 @@ public class Board
     }
 
     /// <summary>
-    /// DFS like function that finds and adds every full capture move to the moves list.
+    ///     DFS like function that finds and adds every full capture move to the moves list.
     /// </summary>
-    /// <param name="jumps">Possible jumps found with the FindJumps function</param>
+    /// <param name="jumps">
+    ///     Possible jumps found with the FindJumps function, passed as a parameter to avoid redundant function
+    ///     calls
+    /// </param>
     /// <param name="moves">The list to which the moves get added</param>
     /// <param name="path">Where the piece has jumped so far</param>
     /// <param name="captures">What the piece has captured so far</param>
     /// <param name="piece">The piece that's finding moves</param>
-    private void AddCaptureMoves((ulong destinations, ulong captures) jumps, List<Move> moves, List<byte> path, ulong captures,
+    private void AddCaptureMoves((ulong destinations, ulong captures) jumps, List<Move> moves, List<byte> path,
+        ulong captures,
         Piece piece)
     {
         var hasFoundCapture = false;
@@ -238,7 +242,41 @@ public class Board
     }
 
     /// <summary>
-    /// Finds every legal move in the position and adds them to the MenMoves and KingsMoves lists
+    ///     Find moves starting with a path out of all legal moves, used in the GameViewModel
+    /// </summary>
+    public List<Move> FindMovesStartingWith(List<byte> path)
+    {
+        return FindMovesStartingWith(path, KingsMoves).Concat(FindMovesStartingWith(path, MenMoves)).ToList();
+    }
+
+    /// <summary>
+    ///     Find moves starting with a path out of a specified list of moves, used in the GameViewModel
+    /// </summary>
+    public List<Move> FindMovesStartingWith(List<byte> path, List<Move> moves)
+    {
+        var res = new List<Move>(3);
+        var len = path.Count;
+        foreach (var move in moves)
+        {
+            if (move.Path.Count < path.Count)
+                continue;
+            var i = 0;
+            while (i < len)
+            {
+                if (move.Path[i] != path[i])
+                    break;
+                i++;
+            }
+
+            if (i == len)
+                res.Add(move);
+        }
+
+        return res;
+    }
+
+    /// <summary>
+    ///     Finds every legal move in the position and adds them to the MenMoves and KingsMoves lists
     /// </summary>
     private void FindAllLegalMoves()
     {
@@ -256,7 +294,7 @@ public class Board
     }
 
     /// <summary>
-    /// Finds all legal moves for a piece type
+    ///     Finds all legal moves for a piece type
     /// </summary>
     private void FindLegalMoves(ulong pieces, Piece piece, List<Move> moves)
     {
@@ -288,35 +326,9 @@ public class Board
         moves.Sort((a, b) => b.CompareTo(a));
     }
 
-    
-    public List<Move> FindMovesStartingWith(List<byte> path)
-    {
-        return FindMovesStartingWith(path, KingsMoves).Concat(FindMovesStartingWith(path, MenMoves)).ToList();
-    }
-
-    public List<Move> FindMovesStartingWith(List<byte> path, List<Move> moves)
-    {
-        var res = new List<Move>(3);
-        var len = path.Count;
-        foreach (var move in moves)
-        {
-            if (move.Path.Count < path.Count)
-                continue;
-            var i = 0;
-            while (i < len)
-            {
-                if (move.Path[i] != path[i])
-                    break;
-                i++;
-            }
-
-            if (i == len)
-                res.Add(move);
-        }
-
-        return res;
-    }
-
+    /// <summary>
+    ///     Performs a move and changes the board state accordingly, then refreshes all legal moves
+    /// </summary>
     public void MakeMove(Move move)
     {
         var piece = this[move.Start];
@@ -327,6 +339,10 @@ public class Board
         FindAllLegalMoves();
     }
 
+    /// <summary>
+    ///     Iterates through every set bit in a bitmask
+    /// </summary>
+    /// <returns>A bitmask for each bit</returns>
     public static IEnumerable<ulong> GetPieceMasks(ulong pieces)
     {
         while (pieces != 0)
@@ -336,7 +352,12 @@ public class Board
         }
     }
 
-    public static IEnumerable<(ulong destinations, ulong captures)> GetPieceMasks((ulong destinations, ulong captures) pieces)
+    /// <summary>
+    ///     Iterates through every set bit in a pair of destination and capture bitmasks
+    /// </summary>
+    /// <returns>A pair of bitmasks for every bit</returns>
+    public static IEnumerable<(ulong destinations, ulong captures)> GetPieceMasks(
+        (ulong destinations, ulong captures) pieces)
     {
         while (pieces.destinations != 0 && pieces.captures != 0)
         {
@@ -346,6 +367,10 @@ public class Board
         }
     }
 
+    /// <summary>
+    ///     Iterates through every set bit in a bitmask
+    /// </summary>
+    /// <returns>Every bit as an index telling where it is</returns>
     public static IEnumerable<byte> GetPieceIndexes(ulong pieces)
     {
         while (pieces != 0)
@@ -355,6 +380,10 @@ public class Board
         }
     }
 
+    /// <summary>
+    ///     Iterates through every set bit for a specified piece type
+    /// </summary>
+    /// <returns>Every bit as an index telling where it is</returns>
     public IEnumerable<byte> GetPieceIndexes(Piece piece)
     {
         var pieces = _pieces[(byte)piece];
@@ -370,8 +399,8 @@ public class Board
         var res = "";
         for (var row = 0; row < 8; row++)
         {
-            res += $"Row {row}: {ToChar(this[row, 0])}";
-            for (var col = 1; col < 8; col++) res += $", {ToChar(this[row, col])}";
+            res += $"Row {row}: {PieceToChar(this[row, 0])}";
+            for (var col = 1; col < 8; col++) res += $", {PieceToChar(this[row, col])}";
 
             res += "\n";
         }
@@ -379,7 +408,10 @@ public class Board
         return res;
     }
 
-    private char ToChar(Piece piece)
+    /// <summary>
+    ///     Represents a piece as a char, used in the LLM prompt
+    /// </summary>
+    private char PieceToChar(Piece piece)
     {
         switch (piece)
         {

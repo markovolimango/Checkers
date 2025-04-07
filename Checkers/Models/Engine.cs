@@ -4,18 +4,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Checkers.Models;
+using Checkers.Models.Board;
 
-namespace Checkers.Engine;
+namespace Checkers.Models;
 
 public class Engine
 {
     private const int MaxDepth = 20;
     private static readonly float[] RowMultipliers = [0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.4f];
 
-    public Move? FindBestMoveWithTimeLimit(Board board, int timeLimitMs)
+    /// <summary>
+    ///     Finds the best move with a set time limit
+    /// </summary>
+    public Move? FindBestMoveWithTimeLimit(Board.Board board, int timeLimitMs)
     {
-        Console.WriteLine($"FindBestMoveWithTimeLimit: {timeLimitMs}");
         var sw = new Stopwatch();
         sw.Start();
         using var cts = new CancellationTokenSource();
@@ -30,24 +32,22 @@ public class Engine
                 var move = FindBestMoveWithDepth(board, depth, cts.Token);
                 bestMove = move;
 
-                Console.WriteLine(
-                    $"Depth {depth} completed. Time elapsed: {sw.Elapsed.TotalMilliseconds}ms");
-
                 if (sw.ElapsedMilliseconds > timeLimitMs)
                     break;
             }
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Time limit reached!");
         }
 
         sw.Stop();
-        Console.WriteLine($"Total analysis time: {sw.Elapsed.TotalMilliseconds}ms");
         return bestMove;
     }
 
-    private Move? FindBestMoveWithDepth(Board board, int depth,
+    /// <summary>
+    ///     Finds the best move with a set depth, used only internaly
+    /// </summary>
+    private Move? FindBestMoveWithDepth(Board.Board board, int depth,
         CancellationToken cancellationToken)
     {
         var allMoves = new List<Move>();
@@ -58,7 +58,7 @@ public class Engine
         Parallel.ForEach(allMoves, new ParallelOptions
             { CancellationToken = cancellationToken, MaxDegreeOfParallelism = Environment.ProcessorCount }, move =>
         {
-            var newBoard = new Board(board);
+            var newBoard = new Board.Board(board);
             newBoard.MakeMove(move);
             var score = Evaluate(newBoard, depth - 1, float.MinValue, float.MaxValue, cancellationToken);
 
@@ -90,14 +90,20 @@ public class Engine
         return res;
     }
 
-    private float Evaluate(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    /// <summary>
+    ///     Evaluates a position
+    /// </summary>
+    private float Evaluate(Board.Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         return board.IsWhiteTurn
             ? Minimize(board, depth, alpha, beta, cancellationToken)
             : Maximize(board, depth, alpha, beta, cancellationToken);
     }
 
-    private float Minimize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    /// <summary>
+    ///     Minimizing part of the minimax algotithm
+    /// </summary>
+    private float Minimize(Board.Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -112,7 +118,7 @@ public class Engine
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var newBoard = new Board(board);
+            var newBoard = new Board.Board(board);
             newBoard.MakeMove(move);
             var eval = Maximize(newBoard, depth - 1, alpha, beta, cancellationToken);
             if (eval < res)
@@ -126,7 +132,10 @@ public class Engine
         return res;
     }
 
-    private float Maximize(Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
+    /// <summary>
+    ///     Maximizing part of the minimax algorithm
+    /// </summary>
+    private float Maximize(Board.Board board, int depth, float alpha, float beta, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -142,7 +151,7 @@ public class Engine
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var newBoard = new Board(board);
+            var newBoard = new Board.Board(board);
             newBoard.MakeMove(move);
             var eval = Minimize(newBoard, depth - 1, alpha, beta, cancellationToken);
             if (eval > res)
@@ -156,13 +165,16 @@ public class Engine
         return res;
     }
 
-    private float EvaluateSimple(Board board)
+    /// <summary>
+    ///     Evaluates a position with zero depth, just counting pieces and how far along are they
+    /// </summary>
+    private static float EvaluateSimple(Board.Board board)
     {
         if (board.KingsMoves.Count == 0 && board.MenMoves.Count == 0)
         {
             if (board.IsWhiteTurn)
-                return 200;
-            return -200;
+                return 1000;
+            return -1000;
         }
 
         var res = 0f;

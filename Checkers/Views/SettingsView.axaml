@@ -3,9 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Checkers.ViewModels"
+             xmlns:settings="clr-namespace:Checkers.ViewModels.Settings"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="800"
              x:Class="Checkers.Views.SettingsView"
-             x:DataType="viewModels:SettingsViewModel">
+             x:DataType="settings:SettingsViewModel">
 
     <UserControl.Styles>
         <Style Selector="TextBlock.heading">
@@ -57,13 +58,6 @@
                                          Content="White"
                                          IsChecked="{Binding !Data.IsPlayerRed}" />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="section">
-                    <StackPanel>
-                        <TextBlock Classes="section">Sound Effects</TextBlock>
-                        <CheckBox Content="Enabled" IsChecked="{Binding Data.SoundEffectsEnabled}" />
                     </StackPanel>
                 </Border>
 

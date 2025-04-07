@@ -1,28 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Avalonia.Controls;
 using Checkers.Models;
+using Checkers.Models.Board;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
-namespace Checkers.ViewModels;
+namespace Checkers.ViewModels.Game;
 
 public partial class GameViewModel : ViewModelBase
 {
     private const string YourTurnText = "Your Turn", BotTurnText = "Thinking...";
 
     private readonly Board _board = new();
-    private readonly Engine.Engine _engine = new();
-    private readonly HintSystem _hintSystem;
+    private readonly Engine _engine = new();
+
     private readonly List<byte> _path = [];
-
-    private readonly SettingsData _settings;
-
     private Move? _botMove;
-    [ObservableProperty] private string _hintText;
+
     private bool _isBotThinking;
     private List<Move> _moves = [];
-    [ObservableProperty] private string _questionText = "";
     [ObservableProperty] private string _turnText = "";
 
     public GameViewModel(MainWindowViewModel mainWindowViewModel)
@@ -42,12 +41,10 @@ public partial class GameViewModel : ViewModelBase
         }
 
         MainWindowViewModel = mainWindowViewModel;
-        _settings = mainWindowViewModel.SettingsData;
-        Console.WriteLine(MainWindowViewModel.SettingsData.BotThinkingTime);
-        Console.WriteLine(_settings.BotThinkingTime);
+        SettingsData = mainWindowViewModel.SettingsData;
 
-        _hintSystem = new HintSystem(_settings.HintModelName);
-        HintText = "";
+        HintSystemViewModel = new HintSystemViewModel(SettingsData.HintModelName);
+        GetHintCommand = new AsyncRelayCommand(() => HintSystemViewModel.GetHint(_board));
 
         if (MainWindowViewModel.SettingsData.IsPlayerRed)
             IsBotThinking = false;
@@ -56,11 +53,14 @@ public partial class GameViewModel : ViewModelBase
     }
 
     public Square[] Squares { get; }
+    public Settings.SettingsData SettingsData { get; }
+    public HintSystemViewModel HintSystemViewModel { get; }
+    public ICommand GetHintCommand { get; }
 
-    public string HintModelName => _settings.HintModelName;
-    public GridLength HintsGridWidth => _settings.HintsEnabled ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
-    private int BotTimeLimitMs => (int)(_settings.BotThinkingTime * 1000);
-    public bool AreHintsEnabled => _settings.HintsEnabled;
+    public GridLength HintsGridWidth =>
+        SettingsData.HintsEnabled ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+
+    private int BotTimeLimitMs => (int)(SettingsData.BotThinkingTime * 1000);
 
     private bool IsBotThinking
     {
@@ -72,6 +72,9 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    ///     Handles selecting / deselecting squares and checking if moves are legal
+    /// </summary>
     private async void OnSquareClick(Square square)
     {
         if (IsBotThinking)
@@ -122,28 +125,27 @@ public partial class GameViewModel : ViewModelBase
             return;
         Squares[_path[0]].Deselect();
         _path.Clear();
-        Console.WriteLine(BotTimeLimitMs);
         await BotPlayMove(BotTimeLimitMs);
     }
 
+    /// <summary>
+    ///     Finds the best move and plays it
+    /// </summary>
     private async Task BotPlayMove(int timeLimitMs)
     {
         await Task.Run(() =>
         {
             IsBotThinking = true;
-            Console.WriteLine($"BotPlayMove: {timeLimitMs}");
             _botMove = _engine.FindBestMoveWithTimeLimit(_board, timeLimitMs);
-            Console.WriteLine(_botMove);
         });
         await MoveBotPieceAlong(_botMove);
         IsBotThinking = false;
-        if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
-        {
-            await Task.Delay(800);
-            MainWindowViewModel.LoadEndViewModel(false);
-        }
+        await CheckForWin();
     }
 
+    /// <summary>
+    ///     Moves a piece to the clicked square
+    /// </summary>
     private async Task<int> MovePlayerPieceTo(byte index)
     {
         var last = _path[^1];
@@ -163,11 +165,7 @@ public partial class GameViewModel : ViewModelBase
                 Squares[(last + index) / 2].RemovePiece();
             _board.MakeMove(moves[0]);
             Squares[index].PutPiece(_board[moves[0].End]);
-            if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
-            {
-                await Task.Delay(800);
-                MainWindowViewModel.LoadEndViewModel(true);
-            }
+            await CheckForWin();
 
             return 1;
         }
@@ -178,6 +176,21 @@ public partial class GameViewModel : ViewModelBase
         return 0;
     }
 
+    /// <summary>
+    ///     Loads the end screen if someone has won
+    /// </summary>
+    private async Task CheckForWin()
+    {
+        if (_board.KingsMoves.Count == 0 && _board.MenMoves.Count == 0 && MainWindowViewModel is not null)
+        {
+            await Task.Delay(800);
+            MainWindowViewModel.LoadEndViewModel(true);
+        }
+    }
+
+    /// <summary>
+    ///     Moves a piece along a given path
+    /// </summary>
     private async Task MoveBotPieceAlong(Move? move)
     {
         if (move is null)
@@ -200,21 +213,8 @@ public partial class GameViewModel : ViewModelBase
         Squares[move.Start].Deselect();
     }
 
-    public async void GetHint()
-    {
-        var questionText = QuestionText;
-        QuestionText = "";
-        await _hintSystem.GetHint(_board, this, questionText);
-    }
-
     public void ExportBoardState()
     {
         Console.WriteLine($"{_board}");
-    }
-
-    public void LoadMainMenu()
-    {
-        if (MainWindowViewModel is null) return;
-        MainWindowViewModel.LoadMainMenuViewModel();
     }
 }

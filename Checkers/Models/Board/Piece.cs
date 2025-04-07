@@ -1,4 +1,4 @@
-namespace Checkers.Models;
+namespace Checkers.Models.Board;
 
 public enum Piece : byte
 {
