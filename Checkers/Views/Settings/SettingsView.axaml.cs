@@ -1,8 +1,6 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
-namespace Checkers.Views;
+namespace Checkers.Views.Settings;
 
 public partial class SettingsView : UserControl
 {

@@ -5,7 +5,7 @@
              xmlns:viewModels="clr-namespace:Checkers.ViewModels"
              xmlns:game="clr-namespace:Checkers.ViewModels.Game"
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="700"
-             x:Class="Checkers.Views.GameView"
+             x:Class="Checkers.Views.Game.GameView"
              x:DataType="game:GameViewModel">
 
     <UserControl.Styles>
